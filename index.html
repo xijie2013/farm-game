@@ -25,6 +25,14 @@
   #app{flex:1 1 auto;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));}
   .farm-pin{position:sticky;top:0;z-index:5;}
   .pin-flush{margin:0;border-radius:0 0 16px 16px;border-top:none;border-left:none;border-right:none;box-shadow:0 5px 10px rgba(120,80,30,.13);}
+  /* 顶部叠层分区标签（选中浮起并与下方面板同色融合） */
+  .toptabs{display:flex;align-items:flex-end;padding-left:6px;}
+  .toptab{width:200px;text-align:center;white-space:nowrap;overflow:hidden;font-size:13px;font-weight:800;padding:7px 0 8px;border-radius:12px 12px 0 0;margin-left:-186px;cursor:pointer;position:relative;z-index:1;box-shadow:0 -1px 2px rgba(120,80,30,.08);}
+  .toptab:first-child{margin-left:0;}
+  .toptab.on{padding-bottom:12px;margin-bottom:-5px;z-index:6;}
+  .toptab-actions{display:flex;gap:6px;align-self:center;margin-left:auto;padding-bottom:2px;}
+  .pinpanel{margin:0;border:none;border-radius:0 0 16px 16px;box-shadow:0 5px 10px rgba(120,80,30,.13);}
+  .brand{font-weight:800;font-size:14px;color:var(--ink);}
   h1,h2,h3,h4{margin:0;}
   .hidden{display:none!important;}
 
@@ -41,7 +49,9 @@
   /* —— 图片化 HUD —— */
   .hud{display:flex;flex-direction:column;gap:6px;width:100%;}
   .hud-row{display:flex;align-items:center;gap:6px;}
-  .hud-row2{justify-content:flex-end;}
+  .hud-row2{justify-content:space-between;}
+  .tabtitle{font-weight:800;font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hud-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;border-left:1px solid var(--line);padding-left:8px;}
   .stat-pill{display:flex;align-items:center;gap:4px;background:linear-gradient(#fffdf8,#fbf2e2);border:1px solid #ecdcc4;border-radius:20px;padding:3px 9px 3px 3px;box-shadow:0 1px 3px rgba(150,110,50,.12);}
   .stat-pill .pic{width:23px;height:23px;flex:0 0 auto;display:block;}
   .stat-pill .val{font-weight:800;font-size:13.5px;color:#5b4632;font-variant-numeric:tabular-nums;}
@@ -130,6 +140,11 @@
   .pick .nm{font-size:9px;font-weight:700;color:#7a6448;line-height:1.1;}
   .pick:active{transform:scale(.94);}
 
+  /* 怪兽详情卡 */
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;font-size:12.5px;}
+  .detail-grid > div{display:flex;justify-content:space-between;background:#f6ecda;border-radius:8px;padding:5px 10px;}
+  .detail-grid span{color:var(--muted);}
+
   /* monster cards */
   .mon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;}
   .mon{border-radius:14px;padding:8px 6px 9px;text-align:center;position:relative;cursor:pointer;border:2px solid;background:var(--panel);}
@@ -211,7 +226,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v1.7 · 2026-06-01（游戏内种子仓库/派工选择）';
+const GAME_VERSION = 'v2.3 · 2026-06-01（标签更宽·其余留缝）';
 
 // ---------- 内容定义 ----------
 const ING = {
@@ -232,16 +247,17 @@ const RECIPES = [
 
 // 怪兽图鉴模板
 const MON_POOL = [
-  {key:'hamster', s:'🐹', n:'仓鼠农夫', rar:'普通', best:'farm',  base:{farm:6,cook:2,serve:3,battle:2}},
-  {key:'mush',    s:'🍄', n:'蘑菇精',   rar:'普通', best:'farm',  base:{farm:5,cook:3,serve:2,battle:3}},
-  {key:'fox',     s:'🦊', n:'狐狸大厨', rar:'稀有', best:'cook',  base:{farm:2,cook:7,serve:4,battle:3}},
-  {key:'owl',     s:'🦉', n:'博士猫头鹰',rar:'稀有', best:'cook',  base:{farm:3,cook:6,serve:3,battle:2}},
-  {key:'penguin', s:'🐧', n:'企鹅侍者', rar:'普通', best:'serve', base:{farm:2,cook:3,serve:7,battle:2}},
-  {key:'octo',    s:'🐙', n:'八爪服务生',rar:'稀有', best:'serve', base:{farm:3,cook:5,serve:6,battle:3}},
-  {key:'dragon',  s:'🐲', n:'小火龙',   rar:'史诗', best:'battle',base:{farm:2,cook:3,serve:2,battle:9}},
-  {key:'oni',     s:'👹', n:'赤鬼武者', rar:'史诗', best:'battle',base:{farm:3,cook:2,serve:2,battle:10}},
-  {key:'unicorn', s:'🦄', n:'独角兽',   rar:'传说', best:'farm',  base:{farm:9,cook:6,serve:6,battle:8}},
+  {key:'hamster', s:'🐹', n:'仓鼠农夫', rar:'普通', best:'farm',  base:{farm:6,cook:2,serve:3,battle:2}, skill:{n:'囤囤大法', d:'种田时小幅提升产出。'}},
+  {key:'mush',    s:'🍄', n:'蘑菇精',   rar:'普通', best:'farm',  base:{farm:5,cook:3,serve:2,battle:3}, skill:{n:'孢子催熟', d:'让所在地块作物生长更快。'}},
+  {key:'fox',     s:'🦊', n:'狐狸大厨', rar:'稀有', best:'cook',  base:{farm:2,cook:7,serve:4,battle:3}, skill:{n:'颠勺', d:'做菜更容易成功、出好菜。'}},
+  {key:'owl',     s:'🦉', n:'博士猫头鹰',rar:'稀有', best:'cook',  base:{farm:3,cook:6,serve:3,battle:2}, skill:{n:'配方解析', d:'更容易发现新菜谱。'}},
+  {key:'penguin', s:'🐧', n:'企鹅侍者', rar:'普通', best:'serve', base:{farm:2,cook:3,serve:7,battle:2}, skill:{n:'极速上菜', d:'招待顾客的速度更快。'}},
+  {key:'octo',    s:'🐙', n:'八爪服务生',rar:'稀有', best:'serve', base:{farm:3,cook:5,serve:6,battle:3}, skill:{n:'八手齐发', d:'可同时招待更多顾客。'}},
+  {key:'dragon',  s:'🐲', n:'小火龙',   rar:'史诗', best:'battle',base:{farm:2,cook:3,serve:2,battle:9}, skill:{n:'喷火', d:'战斗中对敌人造成范围灼烧。'}},
+  {key:'oni',     s:'👹', n:'赤鬼武者', rar:'史诗', best:'battle',base:{farm:3,cook:2,serve:2,battle:10}, skill:{n:'怒砸', d:'对单体造成高额伤害。'}},
+  {key:'unicorn', s:'🦄', n:'独角兽',   rar:'传说', best:'farm',  base:{farm:9,cook:6,serve:6,battle:8}, skill:{n:'彩虹祝福', d:'全属性增益，传说之力。'}},
 ];
+const MOODS = ['😄 开心','😌 平静','🤩 兴奋','😴 慵懒','😋 嘴馋','💪 斗志昂扬'];
 
 // 看板任务（模拟，镜像你的真实项目）
 const TASKS = [
@@ -302,11 +318,18 @@ let PROJ_MULT = 1;        // 进行中任务带来的农场产出倍率
 let PROJ_COUNTS = {};     // 各项目进行中任务数
 let EVENTS = [];          // 即将到来的提醒 → 餐厅事件
 
+function ensureMonMeta(m){
+  if(!m.gender) m.gender = Math.random()<0.5?'♂':'♀';
+  else if(/公|母/.test(m.gender)) m.gender = m.gender.trim().charAt(0);   // 旧存档 '♂ 公' → '♂'
+  if(!m.age) m.age = 1+Math.floor(Math.random()*4);
+  if(!m.mood) m.mood = MOODS[Math.floor(Math.random()*MOODS.length)];
+}
 function giveMonster(key, silent){
   const tpl = MON_POOL.find(m=>m.key===key);
   if(!tpl) return null;
   const inst = {id:monSeq++, key, s:tpl.s, n:tpl.n, rar:tpl.rar, best:tpl.best,
     lv:1, job:'idle', stats:{...tpl.base}};
+  ensureMonMeta(inst);
   S.monsters.push(inst);
   if(!silent) toast(`${tpl.s} 收服了 ${tpl.n}！`);
   checkAch();
@@ -396,17 +419,31 @@ function renderTopbar(){
           <div class="xp"><div class="xp-fill" id="xp-fill"></div><span class="xp-txt" id="v-xp"></span></div>
         </div>
       </div>
-      <div class="hud-row hud-row2">
-        <button class="gear" onclick="openTasks()" title="任务" style="position:relative">📋<span class="hud-badge" id="task-badge"></span></button>
-        <button class="gear" onclick="openAchievements()" title="成就">🏆</button>
-        <button class="gear" onclick="openGameSettings()" title="设置 / 版本">⚙</button>
-      </div>
     </div>`;
   _hud.coin=S.coin; _hud.energy=S.energy; _hud.mat=ING_KEYS.reduce((a,k)=>a+(S.ing[k]||0),0); _hud.xp=S.xp;
   _hud.built=true;
   requestAnimationFrame(hudTick);
 }
 function _setT(id,v){ const e=document.getElementById(id); if(e&&e.textContent!==v) e.textContent=v; }
+function setTabTitle(t){ const e=document.getElementById('tabtitle'); if(e&&e.textContent!==t) e.textContent=t; }
+// 顶部叠层分区标签：选中浮到最前、与下方面板同色融合
+const SEC=[{id:'farm',n:'沃野农田'},{id:'kitchen',n:'溪边料理台'},{id:'monsters',n:'草甸小屋'},{id:'restaurant',n:'森林小店'}];
+const SEC_BG={farm:'#eaf3de',kitchen:'#faeeda',monsters:'#e6f1fb',restaurant:'#fbeaf0'};
+const SEC_OFF={farm:'#cfe6a8',kitchen:'#fac775',monsters:'#b5d4f4',restaurant:'#f4c0d1'};
+const SEC_INK={farm:'#3b6d11',kitchen:'#854f0b',monsters:'#0c447c',restaurant:'#993556'};
+function secBg(id){ return SEC_BG[id]||'#fffdf8'; }
+function topTabs(active){
+  const tabs=SEC.map(s=>{
+    const on=s.id===active; const bg=on?SEC_BG[s.id]:SEC_OFF[s.id];
+    return `<div class="toptab${on?' on':''}" style="background:${bg};color:${SEC_INK[s.id]}" onclick="switchTab('${s.id}')">${s.n}</div>`;
+  }).join('');
+  const actions=`<div class="toptab-actions">
+    <button class="gear" onclick="openTasks()" title="任务" style="position:relative">📋<span class="hud-badge" id="task-badge"></span></button>
+    <button class="gear" onclick="openAchievements()" title="成就">🏆</button>
+    <button class="gear" onclick="openGameSettings()" title="设置 / 版本">⚙</button>
+  </div>`;
+  return `<div class="toptabs">${tabs}${actions}</div>`;
+}
 function hudTick(){
   if(_hud.built){
     const need=levelNeed(S.level);
@@ -419,6 +456,7 @@ function hudTick(){
     _setT('v-xp', Math.floor(_hud.xp)+' / '+need);
     const pc=pendingCount(), tb=document.getElementById('task-badge');
     if(tb){ if(pc>0){ tb.textContent=pc>9?'9+':String(pc); tb.style.display='block'; } else tb.style.display='none'; }
+    if(curTab==='restaurant') setTabTitle('😊 满意度 '+Math.round(S.satisfaction)+'%');
   }
   requestAnimationFrame(hudTick);
 }
@@ -534,12 +572,11 @@ function renderFarm(){
   const sortBtn=(k,t)=>`<button class="sortb ${bagSort===k?'on':''}" onclick="setBagSort('${k}')">${t}</button>`;
 
   document.getElementById('app').innerHTML = `
-    <div class="card farm-pin pin-flush">
-      <div class="row" style="margin-bottom:9px">
-        <div class="grow"><b>🌱 我的农场</b></div>
-        <span class="pill">派农夫怪兽可加速</span>
+    <div class="farm-pin">
+      ${topTabs('farm')}
+      <div class="card pinpanel" style="background:${secBg('farm')}">
+        <div class="plot-grid">${plots}</div>
       </div>
-      <div class="plot-grid">${plots}</div>
     </div>
     <div class="screen">
       ${growPanel}
@@ -655,17 +692,19 @@ function renderKitchen(){
   }).join('');
 
   document.getElementById('app').innerHTML = `
-    <div class="screen">
-      <div class="screen-title">🍳 厨房</div>
-      <div class="screen-sub">手动把材料丢进锅、配出菜谱。配对已知菜谱即可解锁对应的「菜品塔」用于餐厅经营。</div>
-      <div class="card">
-        <div style="font-weight:800;margin-bottom:8px">🍲 料理台</div>
+    <div class="farm-pin">
+      ${topTabs('kitchen')}
+      <div class="card pinpanel" style="background:${secBg('kitchen')}">
         <div class="pot" id="pot">${pot}</div>
         <div class="row" style="margin-top:10px;gap:8px">
           <button class="btn green grow" onclick="cook()">🔥 开火烹饪</button>
           <button class="btn ghost" onclick="selectedPotIngs=[];renderKitchen()">清空</button>
         </div>
-        <div style="font-weight:700;font-size:12px;margin:12px 0 6px;color:var(--muted)">仓库材料（点击加入）</div>
+      </div>
+    </div>
+    <div class="screen">
+      <div class="card">
+        <div style="font-weight:800;font-size:12px;margin-bottom:6px;color:var(--muted)">仓库材料（点击加入锅里）</div>
         <div class="ing-wrap">${palette}</div>
       </div>
       <div class="card">
@@ -716,16 +755,17 @@ function cook(){
 // ============================ 伙伴（怪兽） ============================
 let monMode='manage'; // manage | team
 function renderMonsters(){
+  setTabTitle('⚔ 编队打怪');
   const cards = S.monsters.map(m=>{
     const inTeam=S.battleTeam.includes(m.id);
-    return `<div class="mon r-${m.rar} ${monMode==='team'&&inTeam?'sel':''}" onclick="tapMon(${m.id})">
+    return `<div class="mon r-${m.rar} ${inTeam?'sel':''}" onclick="tapMon(${m.id})">
       <div class="lv">Lv${m.lv}</div><div class="star">${RAR_STAR[m.rar]}</div>
       <div class="sprite">${monSprite(m,44)}</div>
       <div class="mn">${m.n}</div>
       <span class="job job-${m.job}">${jobName(m.job)}</span>
       <div class="stat-line">🌾${m.stats.farm} 🍳${m.stats.cook} 🍽${m.stats.serve} ⚔${m.stats.battle}</div>
     </div>`;
-  }).join('') || `<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">还没有伙伴。去任务里完成工作，或在野外打怪收服！</div>`;
+  }).join('') || `<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">还没有伙伴。完成任务或打野怪来收服！</div>`;
 
   const teamSlots = [0,1,2,3].map(i=>{
     const id=S.battleTeam[i]; const m=id?monById(id):null;
@@ -735,50 +775,61 @@ function renderMonsters(){
   }).join('');
 
   document.getElementById('app').innerHTML = `
-    <div class="screen">
-      <div class="screen-title">👾 伙伴怪兽</div>
-      <div class="screen-sub">收服的怪兽可以派去种田/做菜/当服务员，也能编入队伍卡组去打怪。</div>
-      <div class="row" style="gap:8px;margin-bottom:12px">
-        <button class="btn ${monMode==='manage'?'':'ghost'} grow" onclick="monMode='manage';renderMonsters()">🛠 派工管理</button>
-        <button class="btn ${monMode==='team'?'':'ghost'} grow" onclick="monMode='team';renderMonsters()">⚔ 编队打怪</button>
+    <div class="farm-pin">
+      ${topTabs('monsters')}
+      <div class="card pinpanel" style="background:${secBg('monsters')}">
+        <div class="mon-grid" style="grid-template-columns:repeat(4,1fr)">${teamSlots}</div>
+        <button class="btn green" style="width:100%;margin-top:10px" onclick="startBattle()">🗡 出发打野怪</button>
       </div>
-      ${monMode==='team'?`
-        <div class="card">
-          <div style="font-weight:800;margin-bottom:8px">我的出战队（点下方卡片加入/移出，最多4）</div>
-          <div class="mon-grid" style="grid-template-columns:repeat(4,1fr)">${teamSlots}</div>
-          <button class="btn green" style="width:100%;margin-top:12px" onclick="startBattle()">🗡 出发打野怪</button>
-        </div>`:''}
+    </div>
+    <div class="screen">
       <div class="card">
-        <div style="font-weight:800;margin-bottom:10px">📒 图鉴（${S.monsters.length}/${MON_POOL.length} 种）</div>
+        <div style="font-weight:800;margin-bottom:10px">📒 图鉴（${S.monsters.length}/${MON_POOL.length}）· 点卡片加入/移出出战队</div>
         <div class="mon-grid">${cards}</div>
       </div>
     </div>`;
 }
 function jobName(j){ return {farm:'种田',cook:'做菜',serve:'服务',battle:'战斗',idle:'待命'}[j]||j; }
-function tapMon(id){
-  if(monMode==='team'){
-    const i=S.battleTeam.indexOf(id);
-    if(i>=0) S.battleTeam.splice(i,1);
-    else { if(S.battleTeam.length>=4){toast('队伍满了（4）');return;} S.battleTeam.push(id); }
-    renderMonsters(); return;
-  }
-  const m=monById(id);
-  modal(`<h3>${m.s} ${m.n} <button class="x" onclick="closeModal()">×</button></h3>
+function tapMon(id){ openMonDetail(id); }
+function openMonDetail(id){
+  const m=monById(id); if(!m) return;
+  ensureMonMeta(m);
+  const tpl=MON_POOL.find(t=>t.key===m.key)||{}; const skill=tpl.skill||{n:'—',d:''};
+  const inTeam=S.battleTeam.includes(id);
+  modal(`<h3>${m.n} <button class="x" onclick="closeModal()">×</button></h3>
     <div style="text-align:center">${monSprite(m,84)}</div>
-    <div style="text-align:center;margin-bottom:8px">${RAR_STAR[m.rar]} · Lv${m.lv} · 擅长${jobName(m.best)}</div>
-    <div class="stat-line" style="font-size:13px;justify-content:center;margin-bottom:14px">🌾种田 ${m.stats.farm} ｜ 🍳做菜 ${m.stats.cook} ｜ 🍽服务 ${m.stats.serve} ｜ ⚔战斗 ${m.stats.battle}</div>
-    <div style="font-weight:700;font-size:13px;margin-bottom:6px">指派工作</div>
-    <div class="row" style="flex-wrap:wrap;gap:6px;margin-bottom:14px">
-      ${['farm','cook','serve','idle'].map(j=>`<button class="btn ${m.job===j?'':'ghost'} sm" onclick="setJob(${id},'${j}')">${jobName(j)}</button>`).join('')}
+    <div style="text-align:center;margin:2px 0 8px">${RAR_STAR[m.rar]} · Lv${m.lv} · 擅长${jobName(m.best)}</div>
+    <div class="detail-grid">
+      <div><span>性别</span><b>${m.gender}</b></div>
+      <div><span>年龄</span><b>${m.age} 岁</b></div>
+      <div><span>心情</span><b>${m.mood}</b></div>
+      <div><span>状态</span><b>${jobName(m.job)}</b></div>
     </div>
-    <button class="btn blue" style="width:100%" onclick="trainMon(${id})">💪 训练升级（💰${m.lv*50}）</button>`);
+    <div style="font-size:12px;color:var(--muted);margin:10px 0 4px">属性</div>
+    <div class="detail-grid">
+      <div><span>🌾 种田</span><b>${m.stats.farm}</b></div>
+      <div><span>🍳 做菜</span><b>${m.stats.cook}</b></div>
+      <div><span>🍽 服务</span><b>${m.stats.serve}</b></div>
+      <div><span>⚔ 战斗</span><b>${m.stats.battle}</b></div>
+    </div>
+    <div style="background:#f6ecda;border:1px solid #ecdcc0;border-radius:10px;padding:8px 10px;font-size:12.5px;margin:12px 0 14px">
+      <b>✨ 技能 · ${skill.n}</b><br><span style="color:var(--muted)">${skill.d}</span></div>
+    <div class="row" style="gap:8px">
+      <button class="btn blue grow" onclick="trainMon(${id})">💪 训练（💰${m.lv*50}）</button>
+      <button class="btn ${inTeam?'ghost':'green'} grow" onclick="toggleTeam(${id})">${inTeam?'移出出战队':'⚔ 出战'}</button>
+    </div>`);
 }
-function setJob(id,j){ const m=monById(id); m.job=j; if(j!=='farm'){S.plots.forEach(p=>{if(p.worker===id)p.worker=null;});} closeModal(); renderMonsters(); }
+function toggleTeam(id){
+  const i=S.battleTeam.indexOf(id);
+  if(i>=0) S.battleTeam.splice(i,1);
+  else { if(S.battleTeam.length>=4){ toast('出战队满了（最多4）'); return; } S.battleTeam.push(id); }
+  saveGame(); renderMonsters(); openMonDetail(id);
+}
 function trainMon(id){
   const m=monById(id); const cost=m.lv*50;
-  if(S.coin<cost){ toast('金币不够'); return; }
+  if(S.coin<cost){ toast('金币不够 💰'); return; }
   S.coin-=cost; m.lv++; Object.keys(m.stats).forEach(k=>m.stats[k]+=1); m.stats[m.best]+=1;
-  toast(`${m.s} ${m.n} 升到 Lv${m.lv}！`); closeModal(); renderMonsters(); renderTopbar();
+  toast(`${m.n} 升到 Lv${m.lv}！`); saveGame(); renderMonsters(); openMonDetail(id);
 }
 
 // 简易自动战斗
@@ -842,19 +893,20 @@ function renderRestaurant(){
         <span class="pill">预约</span></div>`).join('')}
     </div>` : '';
   document.getElementById('app').innerHTML = `
-    <div class="screen">
-      <div class="screen-title">🏰 餐厅经营 · 塔防</div>
-      <div class="screen-sub">顾客是路过的小怪兽，用做出来的「菜品塔」招待（击退）它们赚金币。先选塔，再点绿地空位放置。</div>
-      ${evHtml}
-      <div class="card">
+    <div class="farm-pin">
+      ${topTabs('restaurant')}
+      <div class="card pinpanel" style="background:${secBg('restaurant')}">
         <div class="row" style="margin-bottom:8px">
-          <div class="grow"><b>满意度</b> <span id="satTxt">${Math.round(S.satisfaction)}%</span></div>
           <button class="btn green sm" onclick="startWave()">🔔 开始营业（来客）</button>
+          <div class="grow"></div>
+          <span class="pill">😊 <span id="satTxt">${Math.round(S.satisfaction)}%</span></span>
         </div>
         <canvas id="tdCanvas" width="600" height="280"></canvas>
-        <div style="font-weight:700;font-size:12px;margin:10px 0 5px;color:var(--muted)">选择菜品塔放置</div>
-        <div class="tower-tray">${trays}</div>
+        <div class="tower-tray" style="margin-top:8px">${trays}</div>
       </div>
+    </div>
+    <div class="screen">
+      ${evHtml || '<div class="screen-sub" style="padding:4px 2px">暂无来客预告（看板里临近的提醒会变成顾客预约 🔔）。</div>'}
     </div>`;
   initTD();
 }
