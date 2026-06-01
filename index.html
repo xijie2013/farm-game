@@ -123,6 +123,13 @@
   .sortb{border:1px solid var(--line);background:#f3e8d6;color:#7a6448;border-radius:7px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;}
   .sortb.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 
+  /* 地块里的种子/怪兽选择格 */
+  .pickgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+  .pick{position:relative;aspect-ratio:1/1;background:linear-gradient(160deg,#f6ecda,#efdfc4);border:1px solid #e3cfa8;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;cursor:pointer;gap:1px;}
+  .pick.sel{outline:3px solid var(--accent);outline-offset:-2px;}
+  .pick .nm{font-size:9px;font-weight:700;color:#7a6448;line-height:1.1;}
+  .pick:active{transform:scale(.94);}
+
   /* monster cards */
   .mon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;}
   .mon{border-radius:14px;padding:8px 6px 9px;text-align:center;position:relative;cursor:pointer;border:2px solid;background:var(--panel);}
@@ -204,7 +211,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v1.6 · 2026-06-01（修复 SW 干涉看板）';
+const GAME_VERSION = 'v1.7 · 2026-06-01（游戏内种子仓库/派工选择）';
 
 // ---------- 内容定义 ----------
 const ING = {
@@ -581,35 +588,36 @@ function tapPlot(i){
     openPlotManage(i);
   }
 }
-function plantPrompt(i){ openPlotManage(i, true); }
-function openPlotManage(i, planting){
+function plantPrompt(i){ openPlotManage(i); }
+function openPlotManage(i){
   const p=S.plots[i];
-  const cropOpts = ING_KEYS.map(k=>`<option value="${k}" ${p.crop===k?'selected':''}>${ING[k].e} ${ING[k].n}</option>`).join('');
-  const farmers = S.monsters.filter(m=>m.job==='idle'||m.job==='farm'||m.worker===undefined);
-  const wopts = `<option value="">— 不派 —</option>` + S.monsters.map(m=>
-    `<option value="${m.id}" ${p.worker===m.id?'selected':''}>${m.s} ${m.n}（farm ${m.stats.farm}）</option>`).join('');
+  const seeds = ING_KEYS.map(k=>`<div class="pick${p.crop===k?' sel':''}" onclick="setPlotCrop(${i},'${k}')">${ING[k].e}<span class="nm">${ING[k].n}</span></div>`).join('');
+  const noWorker = `<div class="pick${!p.worker?' sel':''}" onclick="setPlotWorker(${i},0)" style="font-size:18px">🚫<span class="nm">不派</span></div>`;
+  const workers = noWorker + S.monsters.map(m=>`<div class="pick${p.worker===m.id?' sel':''}" onclick="setPlotWorker(${i},${m.id})">${monSprite(m,30)}<span class="nm">🌾${m.stats.farm}</span></div>`).join('');
   const upCost = p.lv*60;
-  modal(`<h3>🌾 地块 ${i+1} <button class="x" onclick="closeModal()">×</button></h3>
-    <div style="font-size:13px;margin-bottom:10px;color:var(--muted)">设置作物、派打工怪兽，或升级提产。</div>
-    <div style="font-weight:700;font-size:13px;margin-bottom:4px">种什么</div>
-    <select id="m-crop" class="btn ghost" style="width:100%;margin-bottom:12px;padding:9px">${cropOpts}</select>
-    <div style="font-weight:700;font-size:13px;margin-bottom:4px">派谁打工</div>
-    <select id="m-worker" class="btn ghost" style="width:100%;margin-bottom:14px;padding:9px">${wopts}</select>
-    <div class="row" style="gap:8px">
-      <button class="btn green grow" onclick="savePlot(${i})">✅ 确定</button>
-      <button class="btn blue" onclick="upgradePlot(${i})">⬆ 升级 Lv${p.lv+1}（💰${upCost}）</button>
-    </div>`);
+  modal(`<h3>🌱 地块 ${i+1} <button class="x" onclick="closeModal()">×</button></h3>
+    <div style="font-weight:800;font-size:13px;margin:2px 0 6px">🌰 种子仓库（点击播种）</div>
+    <div class="pickgrid">${seeds}</div>
+    <div style="font-weight:800;font-size:13px;margin:13px 0 6px">👷 派谁打工</div>
+    <div class="pickgrid">${workers}</div>
+    <button class="btn blue" style="width:100%;margin-top:14px" onclick="upgradePlot(${i})">⬆ 升级地块 Lv${p.lv+1}（💰${upCost}）</button>`);
 }
-function savePlot(i){
+function setPlotCrop(i,k){
+  const p=S.plots[i]; if(!p.unlocked) return;
+  p.crop=k; if(p.prog==null) p.prog=0;
+  toast(`${ING[k].e} 已种下${ING[k].n}`);
+  saveGame(); renderFarm(); openPlotManage(i);
+}
+function setPlotWorker(i,wid){
   const p=S.plots[i];
-  const crop=document.getElementById('m-crop').value;
-  const w=document.getElementById('m-worker').value;
-  p.crop=crop;
-  // 解除该怪兽在别处的派工
-  if(w){ S.monsters.forEach(m=>{ if(m.id==w){} }); S.plots.forEach(pp=>{ if(pp!==p && pp.worker==w) pp.worker=null; });
-    const m=monById(+w); if(m) m.job='farm'; p.worker=+w; }
-  else { if(p.worker){ const m=monById(p.worker); if(m && m.job==='farm') m.job='idle'; } p.worker=null; }
-  closeModal(); renderFarm(); renderTopbar();
+  if(wid){
+    S.plots.forEach(pp=>{ if(pp!==p && pp.worker===wid) pp.worker=null; });
+    const m=monById(wid); if(m) m.job='farm'; p.worker=wid;
+  } else {
+    if(p.worker){ const m=monById(p.worker); if(m && m.job==='farm') m.job='idle'; }
+    p.worker=null;
+  }
+  saveGame(); renderFarm(); openPlotManage(i);
 }
 function upgradePlot(i){
   const p=S.plots[i]; const cost=p.lv*60;
