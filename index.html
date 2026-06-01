@@ -137,6 +137,8 @@
   .bag-cell .qty{position:absolute;right:3px;bottom:2px;font-size:10px;font-weight:800;color:#5b4632;background:rgba(255,255,255,.82);border-radius:6px;padding:0 3px;min-width:14px;text-align:center;line-height:14px;}
   .bag-cell .price{position:absolute;left:3px;top:2px;font-size:8px;font-weight:800;color:#b9742f;}
   .bag-cell.empty{opacity:.35;}
+  .bag-head{grid-column:1/-1;font-weight:800;font-size:12px;color:#5b4632;margin:4px 0 -1px;padding-left:2px;opacity:.85;}
+  .bag-head:first-child{margin-top:0;}
   .bag-cell:active{transform:scale(.94);}
 
   /* 生长能量分行 + 排序按钮 */
@@ -238,13 +240,38 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v4.1 · 2026-06-01（测试工具+重置所有地块）';
+const GAME_VERSION = 'v4.3 · 2026-06-01（渔场/牧场派伙伴产出·食性猎手模型）';
 
 // ---------- 内容定义 ----------
+// 两级分类：每种材料属于一个小类（sub），每个小类归到一个大类 big（=地块类型 soil/pond/pasture）
+const SUBCATS = {
+  // 🌾 农田 soil
+  grain:    {big:'soil',    n:'谷物'},
+  veg:      {big:'soil',    n:'蔬菜'},
+  fruit:    {big:'soil',    n:'水果'},
+  spice:    {big:'soil',    n:'香料'},
+  // 🐟 渔场 pond
+  seafish:  {big:'pond',    n:'海鱼'},
+  freshfish:{big:'pond',    n:'淡水鱼'},
+  shrimp:   {big:'pond',    n:'虾类'},
+  shell:    {big:'pond',    n:'贝壳类'},
+  // 🐄 牧场 pasture
+  cattle:   {big:'pasture', n:'牛产'},   // 牛肉/牛奶/奶酪
+  mutton:   {big:'pasture', n:'羊肉'},
+  pork:     {big:'pasture', n:'猪肉'},
+  poultry:  {big:'pasture', n:'禽蛋'},   // 鸡肉/鸡蛋
+};
+const SUB_ORDER = Object.keys(SUBCATS);                 // 顺序即整理时的小类排序权重
+const BIG_ORDER = ['soil','pond','pasture'];
+const BIG_NAME  = {soil:'农田',pond:'渔场',pasture:'牧场'};
+const BIG_EMO   = {soil:'🌾',pond:'🐟',pasture:'🐄'};
+function ingBig(k){ return SUBCATS[ING[k].sub].big; }   // 材料 → 大类
+function ingCatLabel(k){ const sc=SUBCATS[ING[k].sub]; return `${BIG_NAME[sc.big]}·${sc.n}`; }
+
 const ING = {
-  wheat:{e:'🌾',n:'小麦',cat:'谷物',price:2}, tomato:{e:'🍅',n:'番茄',cat:'蔬菜',price:3}, chili:{e:'🌶️',n:'辣椒',cat:'蔬菜',price:4},
-  egg:{e:'🥚',n:'蛋',cat:'其他',price:3}, cheese:{e:'🧀',n:'奶酪',cat:'其他',price:5}, fish:{e:'🐟',n:'鱼',cat:'肉类',price:6},
-  meat:{e:'🥩',n:'肉',cat:'肉类',price:7}, herb:{e:'🌿',n:'香料',cat:'香料',price:5}
+  wheat:{e:'🌾',n:'小麦',sub:'grain',price:2}, tomato:{e:'🍅',n:'番茄',sub:'veg',price:3}, chili:{e:'🌶️',n:'辣椒',sub:'veg',price:4},
+  herb:{e:'🌿',n:'香料',sub:'spice',price:5}, fish:{e:'🐟',n:'鱼',sub:'freshfish',price:6}, shrimp:{e:'🦐',n:'虾',sub:'shrimp',price:7},
+  meat:{e:'🥩',n:'肉',sub:'cattle',price:7}, milk:{e:'🥛',n:'牛奶',sub:'cattle',price:4}, cheese:{e:'🧀',n:'奶酪',sub:'cattle',price:5}, egg:{e:'🥚',n:'蛋',sub:'poultry',price:3}
 };
 const ING_KEYS = Object.keys(ING);
 
@@ -268,6 +295,12 @@ const MON_POOL = [
   {key:'dragon',  s:'🐲', n:'小火龙',   rar:'史诗', best:'battle',base:{farm:2,cook:3,serve:2,battle:9}, skill:{n:'喷火', d:'战斗中对敌人造成范围灼烧。'}},
   {key:'oni',     s:'👹', n:'赤鬼武者', rar:'史诗', best:'battle',base:{farm:3,cook:2,serve:2,battle:10}, skill:{n:'怒砸', d:'对单体造成高额伤害。'}},
   {key:'unicorn', s:'🦄', n:'独角兽',   rar:'传说', best:'farm',  base:{farm:9,cook:6,serve:6,battle:8}, skill:{n:'彩虹祝福', d:'全属性增益，传说之力。'}},
+  // —— 渔场/牧场产出伙伴：派进对应地块后，按其食性产出（副产品 or 猎物）——
+  {key:'cat',   s:'🐱', n:'猫渔夫', rar:'普通', best:'farm', base:{farm:6,cook:2,serve:3,battle:2}, diet:{type:'pond',   ing:'fish',  mode:'hunt'},      skill:{n:'守钓', d:'进渔场，捕回🐟鱼。'}},
+  {key:'otter', s:'🦦', n:'水獭',   rar:'稀有', best:'farm', base:{farm:7,cook:2,serve:2,battle:2}, diet:{type:'pond',   ing:'shrimp',mode:'hunt'},      skill:{n:'摸虾', d:'进渔场，捞回🦐虾。'}},
+  {key:'cow',   s:'🐄', n:'奶牛',   rar:'普通', best:'farm', base:{farm:6,cook:2,serve:2,battle:2}, diet:{type:'pasture',ing:'milk',  mode:'byproduct'}, skill:{n:'产奶', d:'进牧场，产🥛牛奶（副产品）。'}},
+  {key:'hen',   s:'🐔', n:'母鸡',   rar:'普通', best:'farm', base:{farm:5,cook:2,serve:2,battle:2}, diet:{type:'pasture',ing:'egg',   mode:'byproduct'}, skill:{n:'下蛋', d:'进牧场，产🥚蛋（副产品）。'}},
+  {key:'wolf',  s:'🐺', n:'狼猎手', rar:'稀有', best:'farm', base:{farm:7,cook:2,serve:2,battle:5}, diet:{type:'pasture',ing:'meat',  mode:'hunt'},      skill:{n:'狩猎', d:'进牧场，带回🥩肉（猎物）。'}},
 ];
 const MOODS = ['😄 开心','😌 平静','🤩 兴奋','😴 慵懒','😋 嘴馋','💪 斗志昂扬'];
 
@@ -343,7 +376,7 @@ function giveMonster(key, silent){
   const tpl = MON_POOL.find(m=>m.key===key);
   if(!tpl) return null;
   const inst = {id:monSeq++, key, s:tpl.s, n:tpl.n, rar:tpl.rar, best:tpl.best,
-    lv:1, job:'idle', stats:{...tpl.base}};
+    lv:1, job:'idle', stats:{...tpl.base}, diet:tpl.diet||null};
   ensureMonMeta(inst);
   S.monsters.push(inst);
   if(!silent) toast(`${tpl.s} 收服了 ${tpl.n}！`);
@@ -516,6 +549,7 @@ function openGameSettings(){
         <button class="btn sm" onclick="cheat('mat')">+50 材料</button>
         <button class="btn sm ghost" onclick="cheat('reset')">重置任务/领取</button>
         <button class="btn sm ghost" onclick="cheat('plots')">🌱 重置所有地块</button>
+        <button class="btn sm" onclick="cheat('partners')">🐾 发放渔牧伙伴</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:6px">测试模式下断开看板、改用可手动「完成」的模拟任务（在 📋 里），方便测试领奖、产出与抽卡。</div>
     </div>`:''}
@@ -553,6 +587,10 @@ function cheat(type){
     S.monsters.forEach(m=>{ if(m.job==='farm') m.job='idle'; });
     ensurePlots(); toast('🌱 已重置所有地块');
   }
+  else if(type==='partners'){
+    let n=0; ['cat','otter','cow','hen','wolf'].forEach(k=>{ if(!S.monsters.some(m=>m.key===k)){ giveMonster(k,true); n++; } });
+    toast(n?`🐾 发放了 ${n} 只渔牧伙伴`:'渔牧伙伴已齐');
+  }
   saveGame(); if(curTab==='farm') renderFarm(); openGameSettings();
 }
 
@@ -565,7 +603,7 @@ function ensurePlots(){
     if(p.unlocked && !p.type) p.type = ING_TYPE[p.crop] || 'soil';   // 旧存档回填地块类型
   });
 }
-const ING_TYPE={wheat:'soil',tomato:'soil',chili:'soil',herb:'soil',fish:'pond',meat:'pasture',egg:'pasture',cheese:'pasture'};
+const ING_TYPE=Object.fromEntries(ING_KEYS.map(k=>[k, ingBig(k)]));  // 作物 → 地块大类（由 SUBCATS 派生，保证一致）
 const CULT_COSTS=[80,160,320,640,1200,2400,4800,9600,19200];   // 开垦价：按已开垦数递增（与地块位置无关）
 const CHANGE_TYPE_COST=150;                                     // 改造地块类型的花费
 const PLOT_TYPES=[['soil','农田','🌾'],['pond','渔场','🐟'],['pasture','牧场','🐄']];
@@ -595,14 +633,28 @@ function renderFarm(){
     </div>`;
   }).join('');
 
-  let keys=[...ING_KEYS];
-  if(bagSort==='qty') keys.sort((a,b)=>(S.ing[b]||0)-(S.ing[a]||0));
-  else if(bagSort==='price') keys.sort((a,b)=>ING[b].price-ING[a].price);
-  else keys.sort((a,b)=> ING[a].cat.localeCompare(ING[b].cat,'zh') || ING[a].n.localeCompare(ING[b].n,'zh'));
-  const bag = keys.map(k=>{ const q=S.ing[k]||0;
-    return `<div class="bag-cell${q<=0?' empty':''}" title="${ING[k].n}（${ING[k].cat}）单价 ${ING[k].price}" onclick="sellOpen('${k}')">
-      <span class="price">${ING[k].price}💰</span>${ING[k].e}<span class="qty">${fmt(q)}</span></div>`;
-  }).join('');
+  const cell=k=>{ const q=S.ing[k]||0;
+    return `<div class="bag-cell${q<=0?' empty':''}" title="${ING[k].n}（${ingCatLabel(k)}）单价 ${ING[k].price}" onclick="sellOpen('${k}')">
+      <span class="price">${ING[k].price}💰</span>${ING[k].e}<span class="qty">${fmt(q)}</span></div>`; };
+  let bag;
+  if(bagSort==='cat'){
+    // 整理：先大类（农田→渔场→牧场）、再小类、再名称；大类之间插分组标题
+    const ordered=[...ING_KEYS].sort((a,b)=>
+      BIG_ORDER.indexOf(ingBig(a))-BIG_ORDER.indexOf(ingBig(b))
+      || SUB_ORDER.indexOf(ING[a].sub)-SUB_ORDER.indexOf(ING[b].sub)
+      || ING[a].n.localeCompare(ING[b].n,'zh'));
+    let html='', curBig=null;
+    ordered.forEach(k=>{ const b=ingBig(k);
+      if(b!==curBig){ curBig=b; html+=`<div class="bag-head">${BIG_EMO[b]} ${BIG_NAME[b]}</div>`; }
+      html+=cell(k);
+    });
+    bag=html;
+  } else {
+    let keys=[...ING_KEYS];
+    if(bagSort==='qty') keys.sort((a,b)=>(S.ing[b]||0)-(S.ing[a]||0));
+    else keys.sort((a,b)=>ING[b].price-ING[a].price);
+    bag=keys.map(cell).join('');
+  }
 
   const g=growthStats();
   const growPanel = `<div class="card">
@@ -669,25 +721,54 @@ function tapPlot(i){
 }
 function openPlotManage(i){
   const p=S.plots[i];
-  const verb = p.type==='soil' ? '种植' : '养殖';
-  const tName = ({soil:'农田',pond:'渔场',pasture:'牧场'})[p.type]||'农田';
-  const myKeys = ING_KEYS.filter(k=>ING_TYPE[k]===p.type);
-  const seeds = myKeys.map(k=>`<div class="pick${p.crop===k?' sel':''}" onclick="setPlotCrop(${i},'${k}')">${ING[k].e}<span class="nm">${ING[k].n}</span></div>`).join('');
-  const noWorker = `<div class="pick${!p.worker?' sel':''}" onclick="setPlotWorker(${i},0)" style="font-size:18px">🚫<span class="nm">不派</span></div>`;
-  const workers = noWorker + S.monsters.map(m=>`<div class="pick${p.worker===m.id?' sel':''}" onclick="setPlotWorker(${i},${m.id})">${monSprite(m,30)}<span class="nm">🌾${m.stats.farm}</span></div>`).join('');
+  const tName = BIG_NAME[p.type]||'农田';
   const upCost = p.lv*60;
-  modal(`<h3>🌱 地块 ${i+1}（${tName}） <button class="x" onclick="closeModal()">×</button></h3>
-    <div style="font-weight:800;font-size:13px;margin:2px 0 6px">🌰 ${verb}（点击选择）</div>
-    <div class="pickgrid">${seeds}</div>
-    <div style="font-weight:800;font-size:13px;margin:13px 0 6px">👷 派谁打工</div>
-    <div class="pickgrid">${workers}</div>
-    <button class="btn blue" style="width:100%;margin-top:14px" onclick="upgradePlot(${i})">⬆ 升级地块 Lv${p.lv+1}（💰${upCost}）</button>
-    <button class="btn" style="width:100%;margin-top:8px" onclick="changeTypePrompt(${i})">🔧 改造类型（💰${CHANGE_TYPE_COST}）</button>`);
+  const footer = `<button class="btn blue" style="width:100%;margin-top:14px" onclick="upgradePlot(${i})">⬆ 升级地块 Lv${p.lv+1}（💰${upCost}）</button>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="changeTypePrompt(${i})">🔧 改造类型（💰${CHANGE_TYPE_COST}）</button>`;
+  if(p.type==='soil'){
+    // 农田：玩家选种子；可派任意伙伴加速
+    const myKeys = ING_KEYS.filter(k=>ING_TYPE[k]==='soil');
+    const seeds = myKeys.map(k=>`<div class="pick${p.crop===k?' sel':''}" onclick="setPlotCrop(${i},'${k}')">${ING[k].e}<span class="nm">${ING[k].n}</span></div>`).join('');
+    const noWorker = `<div class="pick${!p.worker?' sel':''}" onclick="setPlotWorker(${i},0)" style="font-size:18px">🚫<span class="nm">不派</span></div>`;
+    const workers = noWorker + S.monsters.map(m=>`<div class="pick${p.worker===m.id?' sel':''}" onclick="setPlotWorker(${i},${m.id})">${monSprite(m,30)}<span class="nm">🌾${m.stats.farm}</span></div>`).join('');
+    modal(`<h3>🌾 地块 ${i+1}（${tName}） <button class="x" onclick="closeModal()">×</button></h3>
+      <div style="font-weight:800;font-size:13px;margin:2px 0 6px">🌰 种植（点击选择）</div>
+      <div class="pickgrid">${seeds}</div>
+      <div style="font-weight:800;font-size:13px;margin:13px 0 6px">👷 派谁打工</div>
+      <div class="pickgrid">${workers}</div>${footer}`);
+    return;
+  }
+  // 渔场/牧场：派伙伴，产出取决于其食性（没有"选作物"）
+  const mine = S.monsters.filter(m=>m.diet && m.diet.type===p.type);
+  const none = `<div class="pick${!p.worker?' sel':''}" onclick="clearPlotPartner(${i})" style="font-size:18px">🚫<span class="nm">空置</span></div>`;
+  const list = mine.length
+    ? none + mine.map(m=>`<div class="pick${p.worker===m.id?' sel':''}" onclick="setPlotPartner(${i},${m.id})">${monSprite(m,30)}<span class="nm">${ING[m.diet.ing].e}${ING[m.diet.ing].n}</span></div>`).join('')
+    : `<div style="font-size:12px;color:var(--muted);padding:4px 2px">还没有能进${tName}的伙伴。去扭蛋招募，或在 ⚙设置→测试工具 里发放测试伙伴。</div>`;
+  const tip = p.type==='pond' ? '派会捕鱼/捞虾的伙伴，产出它的猎物。' : '产奶/蛋的伙伴给副产品；肉由猎手伙伴带回——动物不会产出自己的身体。';
+  modal(`<h3>${BIG_EMO[p.type]} 地块 ${i+1}（${tName}） <button class="x" onclick="closeModal()">×</button></h3>
+    <div style="font-weight:800;font-size:13px;margin:2px 0 4px">🐾 派伙伴（产出取决于其食性）</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${tip}</div>
+    <div class="pickgrid">${list}</div>${footer}`);
 }
 function setPlotCrop(i,k){
   const p=S.plots[i]; if(!p.unlocked) return;
   p.crop=k; if(p.prog==null) p.prog=0;
-  toast(`${ING[k].e} ${p.type==='soil'?'已种下':'已开始养'}${ING[k].n}`);
+  toast(`${ING[k].e} 已种下${ING[k].n}`);
+  saveGame(); renderFarm(); openPlotManage(i);
+}
+function setPlotPartner(i,wid){
+  const p=S.plots[i]; const m=monById(wid);
+  if(!m||!m.diet||m.diet.type!==p.type) return;
+  S.plots.forEach(pp=>{ if(pp!==p && pp.worker===wid){ pp.worker=null; if(pp.type!=='soil') pp.crop=null; } });  // 一只伙伴只在一处
+  p.worker=wid; p.crop=m.diet.ing; if(p.prog==null) p.prog=0; m.job='farm';
+  const verb = m.diet.mode==='hunt' ? '开始捕猎' : '开始产出';
+  toast(`${m.s} 进驻${BIG_NAME[p.type]}，${verb}${ING[m.diet.ing].e}${ING[m.diet.ing].n}`);
+  saveGame(); renderFarm(); openPlotManage(i);
+}
+function clearPlotPartner(i){
+  const p=S.plots[i];
+  if(p.worker){ const m=monById(p.worker); if(m && m.job==='farm') m.job='idle'; }
+  p.worker=null; p.crop=null; p.prog=0;
   saveGame(); renderFarm(); openPlotManage(i);
 }
 function setPlotWorker(i,wid){
