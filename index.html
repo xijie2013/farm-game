@@ -238,7 +238,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v3.9 · 2026-06-01（不规则草边地块 12 块重做）';
+const GAME_VERSION = 'v4.0 · 2026-06-01（地块即按钮·开垦选类型·去播种图标）';
 
 // ---------- 内容定义 ----------
 const ING = {
@@ -456,7 +456,7 @@ const SEC_BG={farm:'#eaf3de',kitchen:'#faeeda',monsters:'#e6f1fb',restaurant:'#f
 const SEC_OFF={farm:'#cfe6a8',kitchen:'#fac775',monsters:'#b5d4f4',restaurant:'#f4c0d1'};
 const SEC_INK={farm:'#3b6d11',kitchen:'#854f0b',monsters:'#0c447c',restaurant:'#993556'};
 function secBg(id){ return SEC_BG[id]||'#fffdf8'; }
-function panelBg(id){ return id==='farm' ? 'url(farm-assets/bg_farm.jpg) center/cover fixed' : (SEC_BG[id]||'#fffdf8'); }
+function panelBg(id){ return id==='farm' ? 'url(farm-assets/bg_farm.jpg) 0 0/300px auto repeat fixed' : (SEC_BG[id]||'#fffdf8'); }
 function topTabs(active){
   const tabs=SEC.map(s=>{
     const on=s.id===active; const bg= on ? panelBg(s.id) : SEC_OFF[s.id];
@@ -548,31 +548,30 @@ function cheat(type){
 // ============================ 农场 ============================
 function ensurePlots(){
   if(!Array.isArray(S.plots)) S.plots=[];
-  const costs=[80,160,320,640,1200,2400,4800,9600,19200];
-  while(S.plots.length<12){ const idx=S.plots.length-3; S.plots.push({crop:null,unlocked:false,cost:costs[idx]!=null?costs[idx]:19200}); }
-  S.plots.forEach(p=>{ if(!p.variant) p.variant=1+Math.floor(Math.random()*3); });   // 随机外观变种
+  while(S.plots.length<12){ S.plots.push({crop:null,unlocked:false}); }
+  S.plots.forEach(p=>{
+    if(!p.variant) p.variant=1+Math.floor(Math.random()*3);          // 随机外观变种
+    if(p.unlocked && !p.type) p.type = ING_TYPE[p.crop] || 'soil';   // 旧存档回填地块类型
+  });
 }
 const ING_TYPE={wheat:'soil',tomato:'soil',chili:'soil',herb:'soil',fish:'pond',meat:'pasture',egg:'pasture',cheese:'pasture'};
+const CULT_COSTS=[80,160,320,640,1200,2400,4800,9600,19200];   // 开垦价：按已开垦数递增（与地块位置无关）
+const CHANGE_TYPE_COST=150;                                     // 改造地块类型的花费
+const PLOT_TYPES=[['soil','农田','🌾'],['pond','渔场','🐟'],['pasture','牧场','🐄']];
+function nextCultCost(){ const idx=S.plots.filter(p=>p.unlocked).length-3; return CULT_COSTS[idx]!=null?CULT_COSTS[idx]:CULT_COSTS[CULT_COSTS.length-1]; }
 function plotTileFile(p){
-  const type = !p.unlocked ? 'wild' : (!p.crop ? 'soil' : (ING_TYPE[p.crop]||'soil'));
+  const type = !p.unlocked ? 'wild' : (p.type||'soil');
   return `farm-assets/${type}_${p.variant||1}.png`;
 }
 function renderFarm(){
   ensurePlots();
-  const nextLock = S.plots.findIndex(p=>!p.unlocked);   // 只有下一块可开垦、可见价格
   let plots = S.plots.map((p,i)=>{
     const bg=`background:url(${plotTileFile(p)}) center/contain no-repeat`;
     if(!p.unlocked){
-      if(i===nextLock){
-        return `<div class="plot newplot" style="${bg}" onclick="buyPlot(${i})">
-          <div style="font-size:24px">➕</div><div class="cropname">开垦新地</div>
-          <div class="pill" style="margin-top:3px">💰 ${p.cost}</div></div>`;
-      }
-      return `<div class="plot lockcell" style="${bg}"><div style="font-size:21px">🔒</div></div>`;
+      return `<div class="plot wildcell" style="${bg}" onclick="cultivatePrompt(${i})"></div>`;
     }
     if(!p.crop){
-      return `<div class="plot" style="${bg}" onclick="plantPrompt(${i})">
-        <div class="crop" style="font-size:22px;opacity:.85">➕</div><div class="cropname">播种</div></div>`;
+      return `<div class="plot" style="${bg}" onclick="openPlotManage(${i})"></div>`;
     }
     const ready = p.prog>=100;
     const wm = p.worker? monById(p.worker) : null;
@@ -657,24 +656,27 @@ function tapPlot(i){
     openPlotManage(i);
   }
 }
-function plantPrompt(i){ openPlotManage(i); }
 function openPlotManage(i){
   const p=S.plots[i];
-  const seeds = ING_KEYS.map(k=>`<div class="pick${p.crop===k?' sel':''}" onclick="setPlotCrop(${i},'${k}')">${ING[k].e}<span class="nm">${ING[k].n}</span></div>`).join('');
+  const verb = p.type==='soil' ? '种植' : '养殖';
+  const tName = ({soil:'农田',pond:'渔场',pasture:'牧场'})[p.type]||'农田';
+  const myKeys = ING_KEYS.filter(k=>ING_TYPE[k]===p.type);
+  const seeds = myKeys.map(k=>`<div class="pick${p.crop===k?' sel':''}" onclick="setPlotCrop(${i},'${k}')">${ING[k].e}<span class="nm">${ING[k].n}</span></div>`).join('');
   const noWorker = `<div class="pick${!p.worker?' sel':''}" onclick="setPlotWorker(${i},0)" style="font-size:18px">🚫<span class="nm">不派</span></div>`;
   const workers = noWorker + S.monsters.map(m=>`<div class="pick${p.worker===m.id?' sel':''}" onclick="setPlotWorker(${i},${m.id})">${monSprite(m,30)}<span class="nm">🌾${m.stats.farm}</span></div>`).join('');
   const upCost = p.lv*60;
-  modal(`<h3>🌱 地块 ${i+1} <button class="x" onclick="closeModal()">×</button></h3>
-    <div style="font-weight:800;font-size:13px;margin:2px 0 6px">🌰 种子仓库（点击播种）</div>
+  modal(`<h3>🌱 地块 ${i+1}（${tName}） <button class="x" onclick="closeModal()">×</button></h3>
+    <div style="font-weight:800;font-size:13px;margin:2px 0 6px">🌰 ${verb}（点击选择）</div>
     <div class="pickgrid">${seeds}</div>
     <div style="font-weight:800;font-size:13px;margin:13px 0 6px">👷 派谁打工</div>
     <div class="pickgrid">${workers}</div>
-    <button class="btn blue" style="width:100%;margin-top:14px" onclick="upgradePlot(${i})">⬆ 升级地块 Lv${p.lv+1}（💰${upCost}）</button>`);
+    <button class="btn blue" style="width:100%;margin-top:14px" onclick="upgradePlot(${i})">⬆ 升级地块 Lv${p.lv+1}（💰${upCost}）</button>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="changeTypePrompt(${i})">🔧 改造类型（💰${CHANGE_TYPE_COST}）</button>`);
 }
 function setPlotCrop(i,k){
   const p=S.plots[i]; if(!p.unlocked) return;
   p.crop=k; if(p.prog==null) p.prog=0;
-  toast(`${ING[k].e} 已种下${ING[k].n}`);
+  toast(`${ING[k].e} ${p.type==='soil'?'已种下':'已开始养'}${ING[k].n}`);
   saveGame(); renderFarm(); openPlotManage(i);
 }
 function setPlotWorker(i,wid){
@@ -694,11 +696,34 @@ function upgradePlot(i){
   S.coin-=cost; p.lv++; toast(`地块升到 Lv${p.lv}，产出更快！`);
   closeModal(); renderFarm(); renderTopbar();
 }
-function buyPlot(i){
+function cultivatePrompt(i){
+  const p=S.plots[i]; if(p.unlocked) return;
+  const cost=nextCultCost();
+  const opts=PLOT_TYPES.map(([t,n,e])=>`<button class="btn grow" onclick="cultivate(${i},'${t}')">${e} ${n}</button>`).join('');
+  modal(`<h3>🌱 开垦这块地？ <button class="x" onclick="closeModal()">×</button></h3>
+    <div style="font-size:13px;margin-bottom:2px">花费 <b>💰${cost}</b>，选择用途（之后改造需 💰${CHANGE_TYPE_COST}）：</div>
+    <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${opts}</div>`);
+}
+function cultivate(i,type){
+  const p=S.plots[i]; if(p.unlocked) return;
+  const cost=nextCultCost();
+  if(S.coin<cost){ toast('金币不够，去餐厅经营赚钱 💰'); return; }
+  S.coin-=cost; p.unlocked=true; p.type=type; p.crop=null; p.lv=1; p.prog=0; p.worker=null;
+  toast('🌱 开垦完成！'); closeModal(); renderFarm(); renderTopbar(); checkAch();
+}
+function changeTypePrompt(i){
   const p=S.plots[i];
-  if(S.coin<p.cost){ toast('金币不够，去餐厅经营赚钱 💰'); return; }
-  S.coin-=p.cost; p.unlocked=true; p.crop=null; p.lv=1; p.prog=0; p.worker=null;
-  toast('🌱 开垦了一块新地！'); renderFarm(); renderTopbar(); checkAch();
+  const opts=PLOT_TYPES.map(([t,n,e])=>`<button class="btn grow${p.type===t?' green':''}" onclick="changeType(${i},'${t}')">${e} ${n}</button>`).join('');
+  modal(`<h3>🔧 改造地块 ${i+1} <button class="x" onclick="closeModal()">×</button></h3>
+    <div style="font-size:13px;margin-bottom:2px">改造需花费 <b>💰${CHANGE_TYPE_COST}</b>，会清除当前种养。</div>
+    <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${opts}</div>`);
+}
+function changeType(i,type){
+  const p=S.plots[i];
+  if(p.type===type){ toast('已经是这个类型了'); return; }
+  if(S.coin<CHANGE_TYPE_COST){ toast('金币不够 💰'); return; }
+  S.coin-=CHANGE_TYPE_COST; p.type=type; p.crop=null; p.prog=0;
+  toast('🔧 改造完成！'); closeModal(); renderFarm(); renderTopbar();
 }
 
 // ============================ 厨房 ============================
