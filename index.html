@@ -27,11 +27,11 @@
   .pin-flush{margin:0;border-radius:0 0 16px 16px;border-top:none;border-left:none;border-right:none;box-shadow:0 5px 10px rgba(120,80,30,.13);}
   /* 顶部叠层分区标签（选中浮起并与下方面板同色融合） */
   .toptabs{display:flex;align-items:flex-end;padding:5px 6px 0;background:#fff5e8;}
-  .toptab{width:160px;text-align:center;white-space:nowrap;overflow:hidden;font-size:13px;font-weight:800;padding:7px 0 8px;border-radius:12px 12px 0 0;margin-left:-146px;cursor:pointer;position:relative;z-index:1;box-shadow:0 -1px 2px rgba(120,80,30,.08);}
+  .toptab{width:160px;text-align:center;white-space:nowrap;overflow:hidden;font-size:13px;font-weight:800;padding:7px 0 8px;border-radius:12px 12px 0 0;margin-left:-146px;cursor:pointer;position:relative;z-index:1;box-shadow:0 -1px 2px rgba(120,80,30,.08);text-shadow:0 1px 1px rgba(255,255,255,.5);}
   .toptab:first-child{margin-left:0;}
   .toptab.on{padding-bottom:12px;margin-bottom:-5px;z-index:6;}
   .toptab-actions{display:flex;gap:8px;align-self:center;margin-left:auto;padding-bottom:2px;}
-  .toptab-actions button{border:none;background:none;padding:2px;font-size:20px;line-height:1;cursor:pointer;color:#7a6448;position:relative;}
+  .toptab-actions button{border:none;background:none;padding:2px;font-size:28px;line-height:1;cursor:pointer;color:#7a6448;position:relative;}
   .toptab-actions button:active{transform:scale(.9);}
   .pinpanel{margin:0;border:none;border-radius:0 0 16px 16px;box-shadow:0 5px 10px rgba(120,80,30,.13);}
   .brand{font-weight:800;font-size:14px;color:var(--ink);}
@@ -57,6 +57,14 @@
   .stat-pill{display:flex;align-items:center;gap:4px;background:linear-gradient(#fffdf8,#fbf2e2);border:1px solid #ecdcc4;border-radius:20px;padding:3px 9px 3px 3px;box-shadow:0 1px 3px rgba(150,110,50,.12);}
   .stat-pill .pic{width:23px;height:23px;flex:0 0 auto;display:block;}
   .stat-pill .val{font-weight:800;font-size:13.5px;color:#5b4632;font-variant-numeric:tabular-nums;}
+  .ic{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .ic-coin{width:23px;height:23px;border-radius:50%;overflow:hidden;}
+  .ic-coin::after{content:"";position:absolute;top:-30%;left:-70%;width:55%;height:160%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);transform:rotate(20deg);animation:coinGlint 12s ease-in-out infinite;}
+  @keyframes coinGlint{0%,93.3%{left:-70%;opacity:0}95%{opacity:1}100%{left:150%;opacity:.6}}
+  .ic-gacha{transform-origin:50% 70%;animation:gachaTwitch 10.2s ease-in-out infinite;}
+  @keyframes gachaTwitch{0%,94.7%{transform:rotate(0) scale(1)}96%{transform:rotate(-9deg) scale(1.1)}97.3%{transform:rotate(8deg) scale(1.06)}98.7%{transform:rotate(-4deg)}100%{transform:rotate(0) scale(1)}}
+  .ic-gacha::after{content:"";position:absolute;inset:-25%;border-radius:50%;background:radial-gradient(circle,rgba(255,214,80,.9),rgba(255,214,80,0) 62%);opacity:0;pointer-events:none;animation:gachaFlash 10.2s ease-in-out infinite;}
+  @keyframes gachaFlash{0%,95.3%{opacity:0}97%{opacity:.95}99.3%,100%{opacity:0}}
   #v-coin{display:inline-block;min-width:36px;text-align:left;}
   #v-energy{display:inline-block;min-width:17px;text-align:left;}
   .stat-pill.energy{cursor:pointer;border-color:#f1c860;background:linear-gradient(#fff8e6,#ffedba);animation:epulse 2.2s ease-in-out infinite;}
@@ -66,10 +74,11 @@
   .hud .avatar svg{width:29px;height:29px;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15))}
   .hud .lvl-badge{position:absolute;right:-5px;bottom:-4px;background:#e58a3c;color:#fff;font-size:8.5px;font-weight:800;border-radius:9px;padding:0 4px;border:1.5px solid #fffdf8;}
   .hud .xp{position:relative;flex:1;height:12px;background:#ecdcc4;border-radius:7px;overflow:hidden;min-width:56px;}
-  .hud .xp-fill{position:relative;overflow:hidden;height:100%;width:0;background:linear-gradient(90deg,#7fc24a,#f0c14b,#e58a3c);border-radius:7px;transition:width .4s ease;}
-  .hud .xp-fill::after{content:"";position:absolute;top:0;left:0;height:100%;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);animation:xpsheen 2.2s linear infinite;}
-  @keyframes xpsheen{0%{transform:translateX(-130%)}100%{transform:translateX(320%)}}
-  .hud .xp-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;color:#5b4632;text-shadow:0 1px 0 rgba(255,255,255,.5);}
+  .hud .xp-grad{position:absolute;inset:0;background:linear-gradient(90deg,#7fc24a 0%,#f0c14b 50%,#e58a3c 100%);overflow:hidden;z-index:1;}
+  .hud .xp-grad::after{content:"";position:absolute;top:0;left:0;height:100%;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);animation:xpsheen 9s linear infinite;}
+  .hud .xp-cover{position:absolute;top:0;right:0;height:100%;width:100%;background:#ecdcc4;transition:width .4s ease;z-index:2;}
+  @keyframes xpsheen{0%,85%{transform:translateX(-130%)}100%{transform:translateX(320%)}}
+  .hud .xp-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;color:#5b4632;text-shadow:0 1px 0 rgba(255,255,255,.5);z-index:3;}
   .hud .gear{border:none;background:#f3e8d6;border-radius:10px;width:30px;height:30px;font-size:15px;cursor:pointer;color:#7a6448;flex:0 0 auto;}
   .hud-badge{position:absolute;top:-5px;right:-5px;background:#d2603a;color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;line-height:15px;border-radius:8px;padding:0 3px;display:none;box-shadow:0 1px 3px rgba(0,0,0,.25);}
 
@@ -100,19 +109,20 @@
   .pill{display:inline-flex;align-items:center;gap:3px;background:#f3e8d6;border-radius:20px;padding:2px 9px;font-size:11.5px;font-weight:700;color:#7a6448;}
 
   /* farm grid — 3x3 等大正方形 */
-  .plot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-  .plot{aspect-ratio:3/2;background:linear-gradient(160deg,#f6ead2,#efdcbc);border:1px solid #e3cfa8;border-radius:13px;
-    padding:5px;position:relative;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+  .plot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+  .plot{aspect-ratio:1/1;background:none;border:none;border-radius:0;
+    padding:3px;position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
   .plot.ready{animation:bob .9s ease-in-out infinite;border-color:var(--green);}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-  .plot .crop{font-size:30px;line-height:1.05;filter:drop-shadow(0 2px 2px rgba(0,0,0,.12));}
-  .plot .cropname{font-size:11px;font-weight:700;margin-top:1px;}
-  .plot .pbar{height:6px;width:80%;background:#e0cba6;border-radius:5px;overflow:hidden;margin-top:5px;}
+  .plot .crop{font-size:30px;line-height:1.05;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));}
+  .plot .cropname{font-size:11px;font-weight:800;margin-top:1px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .plot .pbar{height:6px;width:80%;background:rgba(0,0,0,.3);border-radius:5px;overflow:hidden;margin-top:5px;}
   .plot .pfill{height:100%;background:linear-gradient(90deg,#8fc16a,#6fa84f);width:0%;}
-  .plot .worker{position:absolute;top:3px;right:4px;font-size:16px;}
-  .plot .lvtag{position:absolute;top:3px;left:5px;font-size:10px;font-weight:800;color:#a8835a;}
-  .plot.newplot{color:var(--muted);background:repeating-linear-gradient(45deg,#f1e6d3,#f1e6d3 8px,#ece0cb 8px,#ece0cb 16px);border-style:dashed;}
-  .plot.lockcell{background:#efe4d2;border-style:dashed;border-color:#ddc8a8;cursor:default;opacity:.6;}
+  .plot .worker{position:absolute;top:3px;right:4px;font-size:16px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));}
+  .plot .lvtag{position:absolute;top:3px;left:5px;font-size:10px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .plot.newplot,.plot.lockcell{border:none;color:#fff;}
+  .plot.newplot .cropname,.plot.newplot div{text-shadow:0 1px 2px rgba(0,0,0,.55);}
+  .plot.lockcell{cursor:default;filter:brightness(.7) grayscale(.2);}
   .plot.ready .ripe{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;color:var(--green-d);}
 
   /* ingredient chips */
@@ -228,7 +238,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v2.5 · 2026-06-01（标签窄20%·右侧纯图标）';
+const GAME_VERSION = 'v3.9 · 2026-06-01（不规则草边地块 12 块重做）';
 
 // ---------- 内容定义 ----------
 const ING = {
@@ -299,6 +309,9 @@ let S = {
     {crop:null, unlocked:false, cost:640},
     {crop:null, unlocked:false, cost:1200},
     {crop:null, unlocked:false, cost:2400},
+    {crop:null, unlocked:false, cost:4800},
+    {crop:null, unlocked:false, cost:9600},
+    {crop:null, unlocked:false, cost:19200},
   ],
   monsters:[],            // 拥有的怪兽实例
   unlockedTowers:[],      // 已解锁塔 id
@@ -398,15 +411,24 @@ const SVG_COIN='<svg class="pic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="
 const SVG_ENERGY='<svg class="pic" viewBox="0 0 24 24"><path d="M13 2 L4 13 h6 l-2 9 11-13 h-7 z" fill="#ffd23f" stroke="#e8a317" stroke-width="1.3" stroke-linejoin="round"/></svg>';
 const SVG_MAT='<svg class="pic" viewBox="0 0 24 24"><path d="M7 7 Q12 3 17 7 q3 4 2.4 9 Q19 21 12 21 Q5 21 4.6 16 Q4 11 7 7Z" fill="#d6a86a" stroke="#9a6f3e" stroke-width="1.3"/><path d="M8 7 q4 -2 8 0" fill="none" stroke="#9a6f3e" stroke-width="1.3"/><rect x="9.5" y="11" width="5" height="2.2" rx="1.1" fill="#8a5a2e"/></svg>';
 const SVG_SPROUT='<svg viewBox="0 0 24 24"><rect x="11" y="11" width="2" height="9" rx="1" fill="#7a9a4a"/><path d="M12 12 C7 11 6 6 11 6 c0 3 1 5 1 6Z" fill="#6fa84f"/><path d="M12 12 C17 11 18 6 13 6 c0 3 -1 5 -1 6Z" fill="#8fc16a"/></svg>';
-// 扭蛋（gachapon 胶囊）图标
-function gachaSVG(px){ return `<svg viewBox="0 0 24 24" style="width:${px}px;height:${px}px;display:inline-block;vertical-align:middle;flex:0 0 auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.12))">
-  <path d="M3 12 A9 9 0 0 1 21 12 Z" fill="#ef6f5a"/>
-  <path d="M3 12 A9 9 0 0 0 21 12 Z" fill="#fff3e0"/>
-  <line x1="3.3" y1="12" x2="20.7" y2="12" stroke="#c9533f" stroke-width="1.6"/>
-  <circle cx="12" cy="12" r="9" fill="none" stroke="#c9533f" stroke-width="1.5"/>
-  <circle cx="12" cy="12" r="2.4" fill="#ffd23f" stroke="#c9533f" stroke-width="1"/>
-  <ellipse cx="9" cy="7.4" rx="2" ry="1.1" fill="#fff" opacity=".5"/>
+// 扭蛋（gachapon 胶囊）图标 —— 紫色、半透明
+function gachaSVG(px){ return `<svg viewBox="0 0 24 24" style="width:${px}px;height:${px}px;display:block">
+  <path d="M3 12 A9 9 0 0 1 21 12 Z" fill="#9a6fc6" fill-opacity=".72"/>
+  <path d="M3 12 A9 9 0 0 0 21 12 Z" fill="#d9c8f0" fill-opacity=".6"/>
+  <line x1="3.3" y1="12" x2="20.7" y2="12" stroke="#6b4a9c" stroke-width="1.6" stroke-opacity=".8"/>
+  <circle cx="12" cy="12" r="9" fill="none" stroke="#6b4a9c" stroke-width="1.5" stroke-opacity=".85"/>
+  <circle cx="12" cy="12" r="2.4" fill="#ffd23f" stroke="#6b4a9c" stroke-width="1"/>
+  <ellipse cx="9" cy="7.4" rx="2" ry="1.1" fill="#fff" opacity=".55"/>
 </svg>`; }
+const HUD_IMG = {
+  coin:'farm-assets/icon_coin.png',
+  gacha:'farm-assets/icon_gacha.png',
+  level:'farm-assets/icon_level.png',
+  task:'farm-assets/icon_task.png',
+  trophy:'farm-assets/icon_trophy.png',
+  setting:'farm-assets/icon_setting.png',
+};
+function hudIcon(key,fallback,px){ px=px||23; return HUD_IMG[key]?`<img src="${HUD_IMG[key]}" alt="" style="width:${px}px;height:${px}px;object-fit:contain;display:block">`:fallback; }
 
 let _hud={coin:0,energy:0,mat:0,xp:0,built:false};
 function renderTopbar(){
@@ -414,11 +436,11 @@ function renderTopbar(){
   document.getElementById('topbar').innerHTML = `
     <div class="hud">
       <div class="hud-row">
-        <div class="stat-pill" id="pill-coin" title="金币">${SVG_COIN}<span class="val" id="v-coin">0</span></div>
-        <div class="stat-pill energy" id="pill-energy" title="扭蛋·点击查看" onclick="energyInfo()">${gachaSVG(23)}<span class="val" id="v-energy">0</span></div>
+        <div class="stat-pill" id="pill-coin" title="金币"><span class="ic ic-coin">${hudIcon('coin',SVG_COIN)}</span><span class="val" id="v-coin">0</span></div>
+        <div class="stat-pill energy" id="pill-energy" title="扭蛋·点击查看" onclick="energyInfo()"><span class="ic ic-gacha">${hudIcon('gacha',gachaSVG(23))}</span><span class="val" id="v-energy">0</span></div>
         <div class="lvl-box">
-          <div class="avatar">${SVG_SPROUT}<span class="lvl-badge" id="v-lvl">Lv1</span></div>
-          <div class="xp"><div class="xp-fill" id="xp-fill"></div><span class="xp-txt" id="v-xp"></span></div>
+          <div class="avatar">${hudIcon('level',SVG_SPROUT,29)}<span class="lvl-badge" id="v-lvl">Lv1</span></div>
+          <div class="xp"><div class="xp-grad"></div><div class="xp-cover" id="xp-fill"></div><span class="xp-txt" id="v-xp"></span></div>
         </div>
       </div>
     </div>`;
@@ -434,15 +456,16 @@ const SEC_BG={farm:'#eaf3de',kitchen:'#faeeda',monsters:'#e6f1fb',restaurant:'#f
 const SEC_OFF={farm:'#cfe6a8',kitchen:'#fac775',monsters:'#b5d4f4',restaurant:'#f4c0d1'};
 const SEC_INK={farm:'#3b6d11',kitchen:'#854f0b',monsters:'#0c447c',restaurant:'#993556'};
 function secBg(id){ return SEC_BG[id]||'#fffdf8'; }
+function panelBg(id){ return id==='farm' ? 'url(farm-assets/bg_farm.jpg) center/cover fixed' : (SEC_BG[id]||'#fffdf8'); }
 function topTabs(active){
   const tabs=SEC.map(s=>{
-    const on=s.id===active; const bg=on?SEC_BG[s.id]:SEC_OFF[s.id];
+    const on=s.id===active; const bg= on ? panelBg(s.id) : SEC_OFF[s.id];
     return `<div class="toptab${on?' on':''}" style="background:${bg};color:${SEC_INK[s.id]}" onclick="switchTab('${s.id}')">${s.n}</div>`;
   }).join('');
   const actions=`<div class="toptab-actions">
-    <button class="gear" onclick="openTasks()" title="任务" style="position:relative">📋<span class="hud-badge" id="task-badge"></span></button>
-    <button class="gear" onclick="openAchievements()" title="成就">🏆</button>
-    <button class="gear" onclick="openGameSettings()" title="设置 / 版本">⚙</button>
+    <button class="gear" onclick="openTasks()" title="任务" style="position:relative">${hudIcon('task','📋',30)}<span class="hud-badge" id="task-badge"></span></button>
+    <button class="gear" onclick="openAchievements()" title="成就">${hudIcon('trophy','🏆',30)}</button>
+    <button class="gear" onclick="openGameSettings()" title="设置 / 版本">${hudIcon('setting','⚙',30)}</button>
   </div>`;
   return `<div class="toptabs">${tabs}${actions}</div>`;
 }
@@ -454,7 +477,7 @@ function hudTick(){
     _setT('v-coin', fmt(_hud.coin));
     _setT('v-energy', String(Math.round(_hud.energy)));
     _setT('v-lvl', 'Lv'+S.level);
-    const xf=document.getElementById('xp-fill'); if(xf) xf.style.width=Math.min(100,_hud.xp/need*100)+'%';
+    const xf=document.getElementById('xp-fill'); if(xf) xf.style.width=Math.max(0,100-_hud.xp/need*100)+'%';   // 盖住右侧未填充部分，渐变锚定整条
     _setT('v-xp', Math.floor(_hud.xp)+' / '+need);
     const pc=pendingCount(), tb=document.getElementById('task-badge');
     if(tb){ if(pc>0){ tb.textContent=pc>9?'9+':String(pc); tb.style.display='block'; } else tb.style.display='none'; }
@@ -525,28 +548,35 @@ function cheat(type){
 // ============================ 农场 ============================
 function ensurePlots(){
   if(!Array.isArray(S.plots)) S.plots=[];
-  const costs=[80,160,320,640,1200,2400];
-  while(S.plots.length<9){ const idx=S.plots.length-3; S.plots.push({crop:null,unlocked:false,cost:costs[idx]!=null?costs[idx]:2400}); }
+  const costs=[80,160,320,640,1200,2400,4800,9600,19200];
+  while(S.plots.length<12){ const idx=S.plots.length-3; S.plots.push({crop:null,unlocked:false,cost:costs[idx]!=null?costs[idx]:19200}); }
+  S.plots.forEach(p=>{ if(!p.variant) p.variant=1+Math.floor(Math.random()*3); });   // 随机外观变种
+}
+const ING_TYPE={wheat:'soil',tomato:'soil',chili:'soil',herb:'soil',fish:'pond',meat:'pasture',egg:'pasture',cheese:'pasture'};
+function plotTileFile(p){
+  const type = !p.unlocked ? 'wild' : (!p.crop ? 'soil' : (ING_TYPE[p.crop]||'soil'));
+  return `farm-assets/${type}_${p.variant||1}.png`;
 }
 function renderFarm(){
   ensurePlots();
   const nextLock = S.plots.findIndex(p=>!p.unlocked);   // 只有下一块可开垦、可见价格
   let plots = S.plots.map((p,i)=>{
+    const bg=`background:url(${plotTileFile(p)}) center/contain no-repeat`;
     if(!p.unlocked){
       if(i===nextLock){
-        return `<div class="plot newplot" onclick="buyPlot(${i})">
+        return `<div class="plot newplot" style="${bg}" onclick="buyPlot(${i})">
           <div style="font-size:24px">➕</div><div class="cropname">开垦新地</div>
           <div class="pill" style="margin-top:3px">💰 ${p.cost}</div></div>`;
       }
-      return `<div class="plot lockcell"><div style="font-size:21px">🔒</div></div>`;
+      return `<div class="plot lockcell" style="${bg}"><div style="font-size:21px">🔒</div></div>`;
     }
     if(!p.crop){
-      return `<div class="plot" onclick="plantPrompt(${i})">
-        <div class="crop">🟫</div><div class="cropname">空地·播种</div></div>`;
+      return `<div class="plot" style="${bg}" onclick="plantPrompt(${i})">
+        <div class="crop" style="font-size:22px;opacity:.85">➕</div><div class="cropname">播种</div></div>`;
     }
     const ready = p.prog>=100;
     const wm = p.worker? monById(p.worker) : null;
-    return `<div class="plot ${ready?'ready':''}" data-plot="${i}" onclick="tapPlot(${i})">
+    return `<div class="plot ${ready?'ready':''}" style="${bg}" data-plot="${i}" onclick="tapPlot(${i})">
       <div class="lvtag">Lv${p.lv}</div>
       ${wm?`<div class="worker" title="打工怪兽">${monSprite(wm,22)}</div>`:''}
       <div class="crop">${ING[p.crop].e}</div>
@@ -576,7 +606,7 @@ function renderFarm(){
   document.getElementById('app').innerHTML = `
     <div class="farm-pin">
       ${topTabs('farm')}
-      <div class="card pinpanel" style="background:${secBg('farm')}">
+      <div class="card pinpanel" style="background:${panelBg('farm')}">
         <div class="plot-grid">${plots}</div>
       </div>
     </div>
@@ -696,7 +726,7 @@ function renderKitchen(){
   document.getElementById('app').innerHTML = `
     <div class="farm-pin">
       ${topTabs('kitchen')}
-      <div class="card pinpanel" style="background:${secBg('kitchen')}">
+      <div class="card pinpanel" style="background:${panelBg('kitchen')}">
         <div class="pot" id="pot">${pot}</div>
         <div class="row" style="margin-top:10px;gap:8px">
           <button class="btn green grow" onclick="cook()">🔥 开火烹饪</button>
@@ -779,7 +809,7 @@ function renderMonsters(){
   document.getElementById('app').innerHTML = `
     <div class="farm-pin">
       ${topTabs('monsters')}
-      <div class="card pinpanel" style="background:${secBg('monsters')}">
+      <div class="card pinpanel" style="background:${panelBg('monsters')}">
         <div class="mon-grid" style="grid-template-columns:repeat(4,1fr)">${teamSlots}</div>
         <button class="btn green" style="width:100%;margin-top:10px" onclick="startBattle()">🗡 出发打野怪</button>
       </div>
@@ -897,7 +927,7 @@ function renderRestaurant(){
   document.getElementById('app').innerHTML = `
     <div class="farm-pin">
       ${topTabs('restaurant')}
-      <div class="card pinpanel" style="background:${secBg('restaurant')}">
+      <div class="card pinpanel" style="background:${panelBg('restaurant')}">
         <div class="row" style="margin-bottom:8px">
           <button class="btn green sm" onclick="startWave()">🔔 开始营业（来客）</button>
           <div class="grow"></div>
