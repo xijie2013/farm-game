@@ -26,19 +26,21 @@
   .farm-pin{position:sticky;top:0;z-index:5;}
   .pin-flush{margin:0;border-radius:0 0 16px 16px;border-top:none;border-left:none;border-right:none;box-shadow:0 5px 10px rgba(120,80,30,.13);}
   /* 顶部叠层分区标签（选中浮起并与下方面板同色融合） */
-  .toptabs{display:flex;align-items:flex-end;padding-left:6px;}
-  .toptab{width:200px;text-align:center;white-space:nowrap;overflow:hidden;font-size:13px;font-weight:800;padding:7px 0 8px;border-radius:12px 12px 0 0;margin-left:-186px;cursor:pointer;position:relative;z-index:1;box-shadow:0 -1px 2px rgba(120,80,30,.08);}
+  .toptabs{display:flex;align-items:flex-end;padding:5px 6px 0;background:#fff5e8;}
+  .toptab{width:160px;text-align:center;white-space:nowrap;overflow:hidden;font-size:13px;font-weight:800;padding:7px 0 8px;border-radius:12px 12px 0 0;margin-left:-146px;cursor:pointer;position:relative;z-index:1;box-shadow:0 -1px 2px rgba(120,80,30,.08);}
   .toptab:first-child{margin-left:0;}
   .toptab.on{padding-bottom:12px;margin-bottom:-5px;z-index:6;}
-  .toptab-actions{display:flex;gap:6px;align-self:center;margin-left:auto;padding-bottom:2px;}
+  .toptab-actions{display:flex;gap:8px;align-self:center;margin-left:auto;padding-bottom:2px;}
+  .toptab-actions button{border:none;background:none;padding:2px;font-size:20px;line-height:1;cursor:pointer;color:#7a6448;position:relative;}
+  .toptab-actions button:active{transform:scale(.9);}
   .pinpanel{margin:0;border:none;border-radius:0 0 16px 16px;box-shadow:0 5px 10px rgba(120,80,30,.13);}
   .brand{font-weight:800;font-size:14px;color:var(--ink);}
   h1,h2,h3,h4{margin:0;}
   .hidden{display:none!important;}
 
   /* top resource bar */
-  .topbar{flex:0 0 auto;position:relative;z-index:30;background:rgba(255,253,248,.92);backdrop-filter:blur(8px);
-    border-bottom:1px solid var(--line);padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;}
+  .topbar{flex:0 0 auto;position:relative;z-index:30;background:#fff5e8;
+    padding:8px 12px 4px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;}
   .res{display:flex;align-items:center;gap:4px;font-weight:700;font-size:14px;}
   .res .ico{font-size:17px;}
   .res small{font-weight:600;color:var(--muted);font-size:11px;}
@@ -226,7 +228,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v2.3 · 2026-06-01（标签更宽·其余留缝）';
+const GAME_VERSION = 'v2.5 · 2026-06-01（标签窄20%·右侧纯图标）';
 
 // ---------- 内容定义 ----------
 const ING = {
