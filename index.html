@@ -238,7 +238,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v4.0 · 2026-06-01（地块即按钮·开垦选类型·去播种图标）';
+const GAME_VERSION = 'v4.1 · 2026-06-01（测试工具+重置所有地块）';
 
 // ---------- 内容定义 ----------
 const ING = {
@@ -515,6 +515,7 @@ function openGameSettings(){
         <button class="btn sm" onclick="cheat('gacha')">+10 扭蛋</button>
         <button class="btn sm" onclick="cheat('mat')">+50 材料</button>
         <button class="btn sm ghost" onclick="cheat('reset')">重置任务/领取</button>
+        <button class="btn sm ghost" onclick="cheat('plots')">🌱 重置所有地块</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:6px">测试模式下断开看板、改用可手动「完成」的模拟任务（在 📋 里），方便测试领奖、产出与抽卡。</div>
     </div>`:''}
@@ -542,6 +543,16 @@ function cheat(type){
   else if(type==='gacha') S.energy+=10;
   else if(type==='mat') ING_KEYS.forEach(k=>S.ing[k]=(S.ing[k]||0)+50);
   else if(type==='reset'){ S.rewarded=[]; S.doneTasks=[]; S.syncedOnce=false; toast('已重置任务与领取记录'); }
+  else if(type==='plots'){
+    S.plots=[
+      {crop:'wheat', lv:1,prog:0,worker:null,unlocked:true,type:'soil'},
+      {crop:'tomato',lv:1,prog:0,worker:null,unlocked:true,type:'soil'},
+      {crop:'chili', lv:1,prog:0,worker:null,unlocked:true,type:'soil'},
+    ];
+    while(S.plots.length<12) S.plots.push({crop:null,unlocked:false});
+    S.monsters.forEach(m=>{ if(m.job==='farm') m.job='idle'; });
+    ensurePlots(); toast('🌱 已重置所有地块');
+  }
   saveGame(); if(curTab==='farm') renderFarm(); openGameSettings();
 }
 
