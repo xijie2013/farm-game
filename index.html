@@ -157,13 +157,13 @@
   .bag-cell.empty{opacity:.35;}
   .bag-cell.slot{background:#f4ecdc;border:1px dashed #e2cda7;box-shadow:none;cursor:default;}
   /* 帆布包按钮 + 仓库弹窗 */
-  .bagbtn{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;padding:6px 0 2px;}
-  .bagbtn svg{width:92px;height:auto;filter:drop-shadow(0 3px 4px rgba(90,120,60,.22));transition:transform .12s;}
-  .bagbtn:active svg{transform:scale(.93);}
-  .bagbtn-cap{font-weight:800;font-size:13px;color:#5c7a3e;}
+  .bagbtn{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;padding:4px 0;}
+  .bagbtn img{width:150px;height:auto;filter:drop-shadow(0 3px 5px rgba(80,100,50,.28));transition:transform .12s;}
+  .bagbtn:active img{transform:scale(.94);}
   .bagm-top{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
-  .bagm-top b{font-size:15px;}
+  .bagm-ico{font-size:21px;}
   .bagm-top .sortbtns{margin-left:auto;}
+  .bagm-top .sortb{font-size:15px;padding:3px 8px;}
   .bagm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
   .bagm-pager{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px;font-weight:800;font-size:13px;color:#7a6448;}
   .pgb{border:1px solid var(--line);background:#f3e8d6;color:#7a6448;border-radius:8px;width:32px;height:28px;font-size:17px;line-height:1;cursor:pointer;}
@@ -286,7 +286,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v8.5 · 2026-06-01（材料仓库改帆布包·点击弹窗4×6可翻页排序）';
+const GAME_VERSION = 'v8.7 · 2026-06-01（仓库按钮换成 Leo 麻袋蔬菜图标）';
 
 // ---------- 内容定义 ----------
 // 两级分类：每种材料属于一个小类（sub），每个小类归到一个大类 big（=地块类型 soil/pond/pasture）
@@ -789,7 +789,7 @@ function renderFarm(){
     </div>
     <div class="screen">
       ${growPanel}
-      <div class="bagbtn" onclick="openBagModal()">${CANVAS_BAG}<div class="bagbtn-cap">材料仓库</div></div>
+      <div class="bagbtn" onclick="openBagModal()"><img class="bagimg" src="farm-assets/bag_icon.png" alt="材料仓库" draggable="false"></div>
     </div>`;
 }
 // ——— 材料仓库：浅绿帆布包 → 固定弹窗 4×6 可翻页 ———
@@ -816,8 +816,8 @@ function openBagModal(){
   bagPage=Math.max(0,Math.min(bagPage,pages-1));
   const pk=keys.slice(bagPage*PER,(bagPage+1)*PER);
   let cells=''; for(let i=0;i<PER;i++) cells += pk[i]? bagCell(pk[i]) : `<div class="bag-cell slot"></div>`;
-  const sb=(k,t)=>`<button class="sortb ${bagSort===k?'on':''}" onclick="setBagSort('${k}')">${t}</button>`;
-  modal(`<div class="bagm-top"><b>🎒 材料仓库</b><div class="sortbtns">${sb('cat','类别')}${sb('qty','数量')}${sb('price','单价')}</div><button class="x" onclick="closeModal()">×</button></div>
+  const sb=(k,ic,tip)=>`<button class="sortb ${bagSort===k?'on':''}" title="${tip}" onclick="setBagSort('${k}')">${ic}</button>`;
+  modal(`<div class="bagm-top"><span class="bagm-ico">🎒</span><div class="sortbtns">${sb('cat','🏷️','按类别')}${sb('qty','🔢','按数量')}${sb('price','💰','按单价')}</div><button class="x" onclick="closeModal()">×</button></div>
     <div class="bagm-grid">${cells}</div>
     <div class="bagm-pager"><button class="pgb" ${bagPage<=0?'disabled':''} onclick="bagFlip(-1)">‹</button><span>${bagPage+1} / ${pages}</span><button class="pgb" ${bagPage>=pages-1?'disabled':''} onclick="bagFlip(1)">›</button></div>`);
 }
