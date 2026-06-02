@@ -157,9 +157,12 @@
   .bag-cell.empty{opacity:.35;}
   .bag-cell.slot{background:#f4ecdc;border:1px dashed #e2cda7;box-shadow:none;cursor:default;}
   /* 帆布包按钮 + 仓库弹窗 */
-  .bagbtn{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;padding:4px 0;}
-  .bagbtn img{width:150px;height:auto;filter:drop-shadow(0 3px 5px rgba(80,100,50,.28));transition:transform .12s;}
-  .bagbtn:active img{transform:scale(.94);}
+  .bagbtn{display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .bagbtn img{width:auto;height:auto;max-width:92%;max-height:100%;filter:drop-shadow(0 3px 5px rgba(80,100,50,.28));transition:transform .12s;}
+  .bagbtn:active img{transform:scale(.95);}
+  /* 农田页：一屏放下、不滚动；麻袋自动填满祝福卡下方的剩余空间(最大化且不裁切) */
+  .screen.sfit{flex:1;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden;}
+  .screen.sfit .bagbtn{flex:1 1 0;min-height:0;}
   .bagm-top{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
   .bagm-ico{font-size:21px;}
   .bagm-top .sortbtns{margin-left:auto;}
@@ -177,7 +180,7 @@
   .grow-line b{min-width:42px;text-align:right;}
   .sortbtns{display:flex;gap:4px;}
   /* 丰收祝福：藤蔓纸条卡(Leo图) + 生命图腾(Leo图) + 冒光点 */
-  .grow-card{position:relative;display:flex;align-items:center;width:100%;aspect-ratio:1293/665;margin:-2px 0 6px;
+  .grow-card{position:relative;display:flex;align-items:center;width:100%;max-width:340px;margin:0 auto;aspect-ratio:1293/665;
     padding:11% 13% 11% 33%;background:url(farm-assets/grow_panel_v2.png) center/100% 100% no-repeat;overflow:visible;}
   .grow-card::before{content:"";position:absolute;left:6%;top:44%;width:20%;height:34%;border-radius:50%;z-index:0;pointer-events:none;
     background:radial-gradient(circle,rgba(120,235,120,.55),rgba(120,235,120,0) 70%);animation:tglow 3s ease-in-out infinite;}
@@ -286,7 +289,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v8.7 · 2026-06-01（仓库按钮换成 Leo 麻袋蔬菜图标）';
+const GAME_VERSION = 'v9.0 · 2026-06-01（麻袋自适应填满剩余空间·最大化不裁切）';
 
 // ---------- 内容定义 ----------
 // 两级分类：每种材料属于一个小类（sub），每个小类归到一个大类 big（=地块类型 soil/pond/pasture）
@@ -787,10 +790,17 @@ function renderFarm(){
         <div class="plot-grid">${plots}</div>
       </div>
     </div>
-    <div class="screen">
+    <div class="screen sfit">
       ${growPanel}
       <div class="bagbtn" onclick="openBagModal()"><img class="bagimg" src="farm-assets/bag_icon.png" alt="材料仓库" draggable="false"></div>
     </div>`;
+  appFit(true);
+}
+// 农田页一屏不滚动；其它页恢复可滚动
+function appFit(on){ const a=document.getElementById('app'); if(!a) return;
+  a.style.overflowY = on?'hidden':'auto';
+  a.style.display = on?'flex':'block';
+  a.style.flexDirection = on?'column':'';
 }
 // ——— 材料仓库：浅绿帆布包 → 固定弹窗 4×6 可翻页 ———
 const CANVAS_BAG=`<svg viewBox="0 0 130 116" xmlns="http://www.w3.org/2000/svg">
@@ -958,6 +968,7 @@ function changeType(i,type){
 
 // ============================ 厨房 ============================
 function renderKitchen(){
+  appFit(false);
   const pot = selectedPotIngs.length
     ? selectedPotIngs.map((k,idx)=>`<div class="ing" onclick="removePot(${idx})">${ING[k].e}<span class="n">${ING[k].n}</span> ✕</div>`).join('')
     : `<div class="ph">点下面的材料丢进锅里，自己配菜谱 →</div>`;
@@ -1042,6 +1053,7 @@ function cook(){
 // ============================ 伙伴（怪兽） ============================
 let monMode='manage'; // manage | team
 function renderMonsters(){
+  appFit(false);
   setTabTitle('⚔ 编队打怪');
   const cards = S.monsters.map(m=>{
     const inTeam=S.battleTeam.includes(m.id);
@@ -1166,6 +1178,7 @@ function startBattle(){
 // ============================ 餐厅塔防 ============================
 let td=null;
 function renderRestaurant(){
+  appFit(false);
   const trays = RECIPES.map(r=>{
     const got=S.unlockedTowers.includes(r.id);
     return `<div class="tslot ${got?'':'lock'}" data-tower="${r.id}" onclick="${got?`selTower('${r.id}')`:`toast('去厨房做出${r.n}来解锁')`}">

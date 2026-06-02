@@ -1,6 +1,6 @@
 /* 任务农场 Service Worker（独立仓库版，作用域仅 /farm/）。
    首次联网缓存页面与素材，之后离线秒开；GitHub API（看板数据）永不缓存。 */
-const CACHE = 'farm-cache-v67';
+const CACHE = 'farm-cache-v70';
 const ASSETS = [
   './', './index.html', './farm-manifest.json', './farm-icon.svg',
   './farm-assets/mon_hamster.png', './farm-assets/mon_fox.png', './farm-assets/mon_dragon.png',
