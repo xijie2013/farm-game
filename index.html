@@ -155,6 +155,19 @@
   .bag-cell .qty{position:absolute;right:3px;bottom:2px;font-size:10px;font-weight:800;color:#5b4632;background:rgba(255,255,255,.82);border-radius:6px;padding:0 3px;min-width:14px;text-align:center;line-height:14px;}
   .bag-cell .price{position:absolute;left:3px;top:2px;font-size:8px;font-weight:800;color:#b9742f;}
   .bag-cell.empty{opacity:.35;}
+  .bag-cell.slot{background:#f4ecdc;border:1px dashed #e2cda7;box-shadow:none;cursor:default;}
+  /* 帆布包按钮 + 仓库弹窗 */
+  .bagbtn{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;padding:6px 0 2px;}
+  .bagbtn svg{width:92px;height:auto;filter:drop-shadow(0 3px 4px rgba(90,120,60,.22));transition:transform .12s;}
+  .bagbtn:active svg{transform:scale(.93);}
+  .bagbtn-cap{font-weight:800;font-size:13px;color:#5c7a3e;}
+  .bagm-top{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+  .bagm-top b{font-size:15px;}
+  .bagm-top .sortbtns{margin-left:auto;}
+  .bagm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .bagm-pager{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px;font-weight:800;font-size:13px;color:#7a6448;}
+  .pgb{border:1px solid var(--line);background:#f3e8d6;color:#7a6448;border-radius:8px;width:32px;height:28px;font-size:17px;line-height:1;cursor:pointer;}
+  .pgb:disabled{opacity:.35;cursor:default;}
   .bag-head{grid-column:1/-1;font-weight:800;font-size:12px;color:#5b4632;margin:4px 0 -1px;padding-left:2px;opacity:.85;}
   .bag-head:first-child{margin-top:0;}
   .bag-cell:active{transform:scale(.94);}
@@ -273,7 +286,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v8.4 · 2026-06-01（盖含舌片·底含兜子·身体纯净·去掉多余空段）';
+const GAME_VERSION = 'v8.5 · 2026-06-01（材料仓库改帆布包·点击弹窗4×6可翻页排序）';
 
 // ---------- 内容定义 ----------
 // 两级分类：每种材料属于一个小类（sub），每个小类归到一个大类 big（=地块类型 soil/pond/pasture）
@@ -757,28 +770,6 @@ function renderFarm(){
     </div>`;
   }).join('');
 
-  const cell=k=>{ const q=S.ing[k]||0;
-    return `<div class="bag-cell${q<=0?' empty':''}" title="${ING[k].n}（${ingCatLabel(k)}）单价 ${ING[k].price}" onclick="sellOpen('${k}')">
-      <span class="price">${ING[k].price}💰</span>${ING[k].e}<span class="qty">${fmt(q)}</span></div>`; };
-  // 始终按三大类(农田→渔场→牧场)分组；类别/数量/单价只决定每组"组内"排序
-  const rowEls=[];
-  BIG_ORDER.forEach(big=>{
-    let keys=ING_KEYS.filter(k=>ingBig(k)===big);
-    if(bagSort==='qty') keys.sort((a,b)=>(S.ing[b]||0)-(S.ing[a]||0));
-    else if(bagSort==='price') keys.sort((a,b)=>ING[b].price-ING[a].price);
-    else keys.sort((a,b)=>SUB_ORDER.indexOf(ING[a].sub)-SUB_ORDER.indexOf(ING[b].sub)||ING[a].n.localeCompare(ING[b].n,'zh'));
-    rowEls.push({head:big});
-    for(let i=0;i<keys.length;i+=4) rowEls.push({keys:keys.slice(i,i+4)});
-  });
-  // 标题行用薄段 bag_hdr；物品行用 4 周期段(s3-s6)，按 packBodySeq 选(优先靠头尾、中间 repeat)
-  const itemSegs=packBodySeq(rowEls.filter(r=>r.keys).length); let si=0;
-  const packBody=rowEls.map(r=>{
-    if(r.head!==undefined)
-      return `<div class="pack-row pack-head" style="background:url(farm-assets/bag_hdr.png) center/100% 100% no-repeat"><span class="bag-grouphead">${BIG_EMO[r.head]} ${BIG_NAME[r.head]}</span></div>`;
-    const seg=itemSegs[si++];
-    return `<div class="pack-row pack-item" style="background:url(farm-assets/bag_s${seg}.png) center/100% 100% no-repeat"><div class="bagrow">${r.keys.map(cell).join('')}</div></div>`;
-  }).join('');
-
   const g=growthStats();
   const growPanel = `<div class="grow-card">
       <div class="grow-body">
@@ -788,7 +779,6 @@ function renderFarm(){
         <div class="grow-line"><span>已关闭提醒：${g.dis}</span></div>
       </div>
     </div>`;
-  const sortBtn=(k,t)=>`<button class="sortb ${bagSort===k?'on':''}" onclick="setBagSort('${k}')">${t}</button>`;
 
   document.getElementById('app').innerHTML = `
     <div class="farm-pin">
@@ -799,23 +789,45 @@ function renderFarm(){
     </div>
     <div class="screen">
       ${growPanel}
-      <div class="packwrap">
-        <div class="pack">
-          <div class="pack-top">
-            <div class="sortbtns">${sortBtn('cat','类别')}${sortBtn('qty','数量')}${sortBtn('price','单价')}</div>
-          </div>
-          ${packBody}
-          <div class="pack-bot"></div>
-        </div>
-      </div>
+      <div class="bagbtn" onclick="openBagModal()">${CANVAS_BAG}<div class="bagbtn-cap">材料仓库</div></div>
     </div>`;
 }
-function setBagSort(s){ bagSort=s; renderFarm(); }
+// ——— 材料仓库：浅绿帆布包 → 固定弹窗 4×6 可翻页 ———
+const CANVAS_BAG=`<svg viewBox="0 0 130 116" xmlns="http://www.w3.org/2000/svg">
+  <path d="M42 44 Q42 16 65 16 Q88 16 88 44" fill="none" stroke="#7a9b5e" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M28 42 H102 L95 104 Q94.5 109 89 109 H41 Q35.5 109 35 104 Z" fill="#bcd49a" stroke="#6f8f54" stroke-width="3"/>
+  <line x1="33" y1="53" x2="97" y2="53" stroke="#6f8f54" stroke-width="1.6" stroke-dasharray="3 4"/>
+  <rect x="46" y="64" width="38" height="28" rx="6" fill="#a9c585" stroke="#6f8f54" stroke-width="2.4"/>
+  <path d="M59 78 l4 4 8 -9" fill="none" stroke="#6f8f54" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+let bagPage=0;
+function bagSortedKeys(){
+  let keys=[...ING_KEYS];
+  if(bagSort==='qty') keys.sort((a,b)=>(S.ing[b]||0)-(S.ing[a]||0));
+  else if(bagSort==='price') keys.sort((a,b)=>ING[b].price-ING[a].price);
+  else keys.sort((a,b)=> BIG_ORDER.indexOf(ingBig(a))-BIG_ORDER.indexOf(ingBig(b)) || SUB_ORDER.indexOf(ING[a].sub)-SUB_ORDER.indexOf(ING[b].sub) || ING[a].n.localeCompare(ING[b].n,'zh'));
+  return keys;
+}
+function bagCell(k){ const q=S.ing[k]||0;
+  return `<div class="bag-cell${q<=0?' empty':''}" title="${ING[k].n}（${ingCatLabel(k)}）单价 ${ING[k].price}" onclick="sellOpen('${k}')">
+    <span class="price">${ING[k].price}💰</span>${ING[k].e}<span class="qty">${fmt(q)}</span></div>`; }
+function openBagModal(){
+  const PER=24, keys=bagSortedKeys(), pages=Math.max(1,Math.ceil(keys.length/PER));
+  bagPage=Math.max(0,Math.min(bagPage,pages-1));
+  const pk=keys.slice(bagPage*PER,(bagPage+1)*PER);
+  let cells=''; for(let i=0;i<PER;i++) cells += pk[i]? bagCell(pk[i]) : `<div class="bag-cell slot"></div>`;
+  const sb=(k,t)=>`<button class="sortb ${bagSort===k?'on':''}" onclick="setBagSort('${k}')">${t}</button>`;
+  modal(`<div class="bagm-top"><b>🎒 材料仓库</b><div class="sortbtns">${sb('cat','类别')}${sb('qty','数量')}${sb('price','单价')}</div><button class="x" onclick="closeModal()">×</button></div>
+    <div class="bagm-grid">${cells}</div>
+    <div class="bagm-pager"><button class="pgb" ${bagPage<=0?'disabled':''} onclick="bagFlip(-1)">‹</button><span>${bagPage+1} / ${pages}</span><button class="pgb" ${bagPage>=pages-1?'disabled':''} onclick="bagFlip(1)">›</button></div>`);
+}
+function bagFlip(d){ bagPage+=d; openBagModal(); }
+function setBagSort(s){ bagSort=s; bagPage=0; openBagModal(); }
 function sellOpen(k){
   const q=S.ing[k]||0; if(q<=0){ toast('没有'+ING[k].n+'可卖'); return; }
   const pr=ING[k].price;
   modal(`<h3>${ING[k].e} 卖出${ING[k].n} <button class="x" onclick="closeModal()">×</button></h3>
-    <div style="font-size:13px">持有 <b>${fmt(q)}</b> 个　·　单价 <b>${pr}</b>💰</div>
+    <div style="font-size:13px">持有 <b>${fmt(q)}</b> 个　·　单价 <b>${pr}</b>💰　<a onclick="openBagModal()" style="color:var(--accent);cursor:pointer">‹ 返回仓库</a></div>
     <div class="row" style="gap:8px;margin-top:14px">
       <button class="btn grow" onclick="sell('${k}',1)">卖 1（+${pr}）</button>
       <button class="btn grow" onclick="sell('${k}',10)">卖 10</button>
@@ -823,10 +835,9 @@ function sellOpen(k){
     </div>`);
 }
 function sell(k,n){
-  n=Math.min(n, S.ing[k]||0); if(n<=0){ closeModal(); return; }
+  n=Math.min(n, S.ing[k]||0); if(n<=0){ openBagModal(); return; }
   S.ing[k]-=n; const gain=n*ING[k].price; S.coin+=gain;
-  toast(`卖出 ${ING[k].e}×${n}，+${gain}💰`); saveGame(); closeModal();
-  if(curTab==='farm') renderFarm();
+  toast(`卖出 ${ING[k].e}×${n}，+${gain}💰`); saveGame(); renderTopbar(); openBagModal();
 }
 function paintFarmProgress(){
   S.plots.forEach((p,i)=>{
