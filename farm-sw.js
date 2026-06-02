@@ -1,12 +1,14 @@
 /* 任务农场 Service Worker（独立仓库版，作用域仅 /farm/）。
    首次联网缓存页面与素材，之后离线秒开；GitHub API（看板数据）永不缓存。 */
-const CACHE = 'farm-cache-v29';
+const CACHE = 'farm-cache-v64';
 const ASSETS = [
   './', './index.html', './farm-manifest.json', './farm-icon.svg',
   './farm-assets/mon_hamster.png', './farm-assets/mon_fox.png', './farm-assets/mon_dragon.png',
   './farm-assets/icon_coin.png', './farm-assets/icon_gacha.png', './farm-assets/icon_level.png',
   './farm-assets/icon_task.png', './farm-assets/icon_trophy.png', './farm-assets/icon_setting.png',
-  './farm-assets/bg_farm.jpg',
+  './farm-assets/bg_farm.jpg','./farm-assets/grow_panel_v2.png',
+  './farm-assets/bag_s1.png','./farm-assets/bag_s3.png','./farm-assets/bag_s4.png',
+  './farm-assets/bag_s5.png','./farm-assets/bag_s6.png','./farm-assets/bag_s8.png','./farm-assets/bag_hdr.png',
   './farm-assets/soil_1.png','./farm-assets/soil_2.png','./farm-assets/soil_3.png',
   './farm-assets/pond_1.png','./farm-assets/pond_2.png','./farm-assets/pond_3.png',
   './farm-assets/pasture_1.png','./farm-assets/pasture_2.png','./farm-assets/pasture_3.png',

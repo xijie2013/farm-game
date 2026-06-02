@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
 <style>
   /* 可爱圆润中文字体（离线时优雅回退到系统字体） */
-  :root{ --cute:'ZCOOL KuaiLe','PingFang SC','Microsoft YaHei',sans-serif; }
+  :root{ --cute:'ZCOOL KuaiLe','PingFang SC','Microsoft YaHei',-apple-system,BlinkMacSystemFont,sans-serif; }
   :root{
     --bg:#fff7ec; --panel:#fffdf8; --ink:#4a3b2a; --muted:#a8917a;
     --line:#ecdcc4; --accent:#e58a3c; --green:#6fa84f; --green-d:#557f3b;
@@ -22,7 +22,7 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html{background:#e9d8bf;}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  body{margin:0;font-family:var(--cute);
     background:linear-gradient(160deg,#fff7ec,#ffeed8);color:var(--ink);
     width:360px;max-width:100%;margin:0 auto;height:100vh;height:100dvh;
     display:flex;flex-direction:column;overflow:hidden;
@@ -97,7 +97,7 @@
   .tab.active{color:var(--accent);}
   .tab.active .tico{transform:translateY(-1px);filter:drop-shadow(0 2px 3px rgba(229,138,60,.4));}
 
-  .screen{padding:12px;}
+  .screen{padding:4px 12px 12px;}
   .screen-title{font-size:16px;font-weight:800;margin-bottom:2px;display:flex;align-items:center;gap:6px;}
   .screen-sub{font-size:12px;color:var(--muted);margin-bottom:12px;}
 
@@ -136,9 +136,21 @@
   .ing{display:flex;align-items:center;gap:3px;background:#f6ecda;border:1px solid #ecdcc0;border-radius:9px;padding:4px 8px;font-size:13px;font-weight:700;}
   .ing .n{color:#7a6448;font-size:12px;}
 
+  /* 背包外框：上盖固定 + 中段拉伸 + 底座固定（可随格子数扩展） */
+  .packwrap{margin-top:2px;}
+  .pack{position:relative;margin:2px -8px 6px;}
+  .pack-top{position:relative;width:100%;aspect-ratio:450/219;background:url(farm-assets/bag_s1.png) center/100% 100% no-repeat;}
+  .pack-top .sortbtns{position:absolute;right:5%;top:14%;justify-content:flex-end;gap:5px;z-index:2;}
+  .pack-bot{width:100%;aspect-ratio:450/224;background:url(farm-assets/bag_s8.png) center/100% 100% no-repeat;}
+  /* 身体每行=一个等高、缝线整周期对齐、侧壁对齐的纯净身体段(原尺寸，不拉伸)；按 packBodySeq 选段 */
+  .pack-row{display:flex;align-items:center;justify-content:center;padding:0 12%;margin:-1px 0;}
+  .pack-item{aspect-ratio:450/76;}                 /* 物品行(贴合格子) */
+  .pack-head{aspect-ratio:450/38;justify-content:flex-start;}  /* 标题行(薄) */
+  .pack-row .bagrow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;width:100%;}
+  .bag-grouphead{font-weight:800;font-size:13px;color:#5b4126;text-shadow:0 1px 0 rgba(255,255,255,.35);}
   /* 背包格子 */
-  .bag{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
-  .bag-cell{position:relative;aspect-ratio:1/1;background:linear-gradient(160deg,#f6ecda,#efdfc4);border:1px solid #e3cfa8;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:25px;box-shadow:inset 0 1px 2px rgba(255,255,255,.6),0 1px 2px rgba(150,110,50,.1);}
+  .bag{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .bag-cell{position:relative;aspect-ratio:1/1;background:linear-gradient(160deg,#f6ecda,#efdfc4);border:1px solid #e3cfa8;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:21px;box-shadow:inset 0 1px 2px rgba(255,255,255,.6),0 1px 2px rgba(150,110,50,.1);}
   .bag-cell{cursor:pointer;}
   .bag-cell .qty{position:absolute;right:3px;bottom:2px;font-size:10px;font-weight:800;color:#5b4632;background:rgba(255,255,255,.82);border-radius:6px;padding:0 3px;min-width:14px;text-align:center;line-height:14px;}
   .bag-cell .price{position:absolute;left:3px;top:2px;font-size:8px;font-weight:800;color:#b9742f;}
@@ -147,9 +159,24 @@
   .bag-head:first-child{margin-top:0;}
   .bag-cell:active{transform:scale(.94);}
 
-  /* 生长能量分行 + 排序按钮 */
-  .grow-line{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#7a6448;padding:4px 0;border-top:1px dashed var(--line);}
+  /* 丰收祝福分行 + 排序按钮 */
+  .grow-line{display:flex;justify-content:center;gap:12px;align-items:center;font-size:12.5px;color:#7a6448;padding:4px 0;border-top:1px dashed var(--line);}
+  .grow-line b{min-width:42px;text-align:right;}
   .sortbtns{display:flex;gap:4px;}
+  /* 丰收祝福：藤蔓纸条卡(Leo图) + 生命图腾(Leo图) + 冒光点 */
+  .grow-card{position:relative;display:flex;align-items:center;width:100%;aspect-ratio:1293/665;margin:-2px 0 6px;
+    padding:11% 13% 11% 33%;background:url(farm-assets/grow_panel_v2.png) center/100% 100% no-repeat;overflow:visible;}
+  .grow-card::before{content:"";position:absolute;left:6%;top:44%;width:20%;height:34%;border-radius:50%;z-index:0;pointer-events:none;
+    background:radial-gradient(circle,rgba(120,235,120,.55),rgba(120,235,120,0) 70%);animation:tglow 3s ease-in-out infinite;}
+  @keyframes tglow{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:.75;transform:scale(1.15)}}
+  #sparkLayer{position:fixed;inset:0;pointer-events:none;z-index:35;overflow:visible;}
+  .flyspark{position:fixed;width:8px;height:8px;border-radius:50%;offset-anchor:center;will-change:offset-distance,transform,opacity;
+    background:radial-gradient(circle,#fff 0%,#eaffce 50%,rgba(255,255,255,0) 75%);box-shadow:0 0 6px 2px rgba(214,255,170,.7);}
+  .absorb-ring{position:fixed;width:24px;height:24px;border-radius:50%;will-change:transform,opacity;
+    border:2px solid rgba(150,224,106,.9);box-shadow:0 0 8px rgba(150,224,106,.55);}
+  .grow-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+  .grow-head{display:flex;justify-content:center;gap:10px;align-items:center;font-size:14px;}
+  .grow-head b{font-size:15px;color:#4d7029;}
   .sortb{border:1px solid var(--line);background:#f3e8d6;color:#7a6448;border-radius:7px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;}
   .sortb.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 
@@ -246,7 +273,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v4.9 · 2026-06-01（标签换可爱圆体·农田激活用浅色）';
+const GAME_VERSION = 'v8.4 · 2026-06-01（盖含舌片·底含兜子·身体纯净·去掉多余空段）';
 
 // ---------- 内容定义 ----------
 // 两级分类：每种材料属于一个小类（sub），每个小类归到一个大类 big（=地块类型 soil/pond/pasture）
@@ -410,12 +437,14 @@ function plotSpeed(p){
   return base;
 }
 function plotMax(p){ return 8 + p.lv*4; }
-// 生长能量：基础 1 + 已完成任务×0.1 + 已关闭(被X掉)提醒×0.01，驱动整片农场产出
+// 丰收祝福（三个乘区相乘）：基础1 × (1+已完成任务×0.1) × (1+已关闭提醒×0.01)，驱动整片农场产出
 function growthStats(){
   const d=KANBAN.data; let done=0, dis=0;
   if(d){ done=d.tasks.filter(t=>t.status==='done').length; dis=(d.reminders||[]).filter(r=>r.dismissedUntil).length; }
   else { done=(S.doneTasks||[]).length; }
-  return {done, dis, mult: 1 + 0.1*done + 0.01*dis};
+  const taskMul = 1 + 0.1*done;          // 任务乘区
+  const remMul  = 1 + 0.01*dis;          // 提醒乘区
+  return {done, dis, taskMul, remMul, mult: 1 * taskMul * remMul};   // 基础×任务×提醒
 }
 
 // ---------- idle tick ----------
@@ -463,6 +492,49 @@ setInterval(()=>{
   renderTopbar();
   if(curTab==='farm') paintFarmProgress();
 }, 1000);
+
+// ---------- 生命光点：从图腾飞到菜地并被吸收 ----------
+function ensureSparkLayer(){
+  let l=document.getElementById('sparkLayer');
+  if(!l){ l=document.createElement('div'); l.id='sparkLayer'; document.body.appendChild(l); }
+  return l;
+}
+function absorbAt(x,y){
+  const r=document.createElement('div'); r.className='absorb-ring';
+  r.style.left=x+'px'; r.style.top=y+'px'; ensureSparkLayer().appendChild(r);
+  r.animate([{transform:'translate(-50%,-50%) scale(.3)',opacity:.85},
+             {transform:'translate(-50%,-50%) scale(1.6)',opacity:0}],
+            {duration:480,easing:'ease-out'}).onfinish=()=>r.remove();
+}
+function spawnSpark(){
+  if(curTab!=='farm') return;
+  const card=document.querySelector('.grow-card'); if(!card) return;
+  const t=card.getBoundingClientRect(); if(!t.width) return;
+  const plots=document.querySelectorAll('.plot[data-plot]'); if(!plots.length) return;   // 只飞向在产的菜地/渔牧
+  const tg=plots[Math.floor(Math.random()*plots.length)].getBoundingClientRect();
+  const x0=t.left+t.width*0.16, y0=t.top+t.height*0.58;   // 图里石灵胸口宝石位置
+  const x1=tg.left+tg.width/2, y1=tg.top+tg.height*0.5;
+  const dx=x1-x0, dy=y1-y0;
+  // 蒲公英随风：一条平滑的 S 形贝塞尔曲线（控制点沿垂直方向随机偏移）
+  const len=Math.hypot(dx,dy)||1, px=-dy/len, py=dx/len;
+  const amp=60+Math.random()*70, a=(Math.random()*2-1), b=-(Math.random()*2-1);   // 更大的弧度
+  const c1x=dx*0.33+px*amp*a, c1y=dy*0.33+py*amp*a;
+  const c2x=dx*0.66+px*amp*b, c2y=dy*0.66+py*amp*b;
+  const s=document.createElement('div'); s.className='flyspark';
+  s.style.left=x0+'px'; s.style.top=y0+'px';
+  s.style.offsetPath=`path('M0 0 C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${dx.toFixed(1)} ${dy.toFixed(1)}')`;
+  s.style.offsetRotate='0deg';
+  ensureSparkLayer().appendChild(s);
+  const dur=3400+Math.random()*2200;             // 缓慢飘
+  s.animate([
+    {offsetDistance:'0%',opacity:0,transform:'scale(.35)'},
+    {opacity:.85,offset:.14,transform:'scale(1)'},
+    {opacity:.9,offset:.86,transform:'scale(1)'},
+    {offsetDistance:'100%',opacity:.85,transform:'scale(1.15)'}
+  ],{duration:dur,easing:'ease-in-out'}).onfinish=()=>{ s.remove(); absorbAt(x1,y1); };
+}
+function sparkLoop(){ if(curTab==='farm') spawnSpark(); setTimeout(sparkLoop, 6000+Math.random()*5500); }  // 更稀、间隔不规律
+sparkLoop();
 
 // ---------- 顶栏 ----------
 const SVG_COIN='<svg class="pic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#f6c84b" stroke="#d99a2b" stroke-width="1.6"/><circle cx="12" cy="12" r="6.4" fill="none" stroke="#e0a83a" stroke-width="1.4"/><ellipse cx="9" cy="8.6" rx="2.3" ry="1.3" fill="#fff" opacity=".55"/></svg>';
@@ -655,6 +727,13 @@ function plotTileFile(p){
   return st>0 ? `farm-assets/${type}_${p.variant||1}_d${st}.png`
               : `farm-assets/${type}_${p.variant||1}.png`;
 }
+// 放格子的中间段选择：固定空段 s2/s7 之间用 s3-s6，优先靠近 s2/s7(衔接丝滑)，超过 4 行再 repeat 最中间 s5
+function packBodySeq(k){
+  if(k<=0) return [];
+  const order=[3,6,4,5];
+  if(k<=4) return order.slice(0,k).sort((a,b)=>a-b);
+  const res=[3,4]; for(let i=0;i<k-3;i++) res.push(5); res.push(6); return res;
+}
 function renderFarm(){
   ensurePlots();
   let plots = S.plots.map((p,i)=>{
@@ -681,32 +760,33 @@ function renderFarm(){
   const cell=k=>{ const q=S.ing[k]||0;
     return `<div class="bag-cell${q<=0?' empty':''}" title="${ING[k].n}（${ingCatLabel(k)}）单价 ${ING[k].price}" onclick="sellOpen('${k}')">
       <span class="price">${ING[k].price}💰</span>${ING[k].e}<span class="qty">${fmt(q)}</span></div>`; };
-  let bag;
-  if(bagSort==='cat'){
-    // 整理：先大类（农田→渔场→牧场）、再小类、再名称；大类之间插分组标题
-    const ordered=[...ING_KEYS].sort((a,b)=>
-      BIG_ORDER.indexOf(ingBig(a))-BIG_ORDER.indexOf(ingBig(b))
-      || SUB_ORDER.indexOf(ING[a].sub)-SUB_ORDER.indexOf(ING[b].sub)
-      || ING[a].n.localeCompare(ING[b].n,'zh'));
-    let html='', curBig=null;
-    ordered.forEach(k=>{ const b=ingBig(k);
-      if(b!==curBig){ curBig=b; html+=`<div class="bag-head">${BIG_EMO[b]} ${BIG_NAME[b]}</div>`; }
-      html+=cell(k);
-    });
-    bag=html;
-  } else {
-    let keys=[...ING_KEYS];
+  // 始终按三大类(农田→渔场→牧场)分组；类别/数量/单价只决定每组"组内"排序
+  const rowEls=[];
+  BIG_ORDER.forEach(big=>{
+    let keys=ING_KEYS.filter(k=>ingBig(k)===big);
     if(bagSort==='qty') keys.sort((a,b)=>(S.ing[b]||0)-(S.ing[a]||0));
-    else keys.sort((a,b)=>ING[b].price-ING[a].price);
-    bag=keys.map(cell).join('');
-  }
+    else if(bagSort==='price') keys.sort((a,b)=>ING[b].price-ING[a].price);
+    else keys.sort((a,b)=>SUB_ORDER.indexOf(ING[a].sub)-SUB_ORDER.indexOf(ING[b].sub)||ING[a].n.localeCompare(ING[b].n,'zh'));
+    rowEls.push({head:big});
+    for(let i=0;i<keys.length;i+=4) rowEls.push({keys:keys.slice(i,i+4)});
+  });
+  // 标题行用薄段 bag_hdr；物品行用 4 周期段(s3-s6)，按 packBodySeq 选(优先靠头尾、中间 repeat)
+  const itemSegs=packBodySeq(rowEls.filter(r=>r.keys).length); let si=0;
+  const packBody=rowEls.map(r=>{
+    if(r.head!==undefined)
+      return `<div class="pack-row pack-head" style="background:url(farm-assets/bag_hdr.png) center/100% 100% no-repeat"><span class="bag-grouphead">${BIG_EMO[r.head]} ${BIG_NAME[r.head]}</span></div>`;
+    const seg=itemSegs[si++];
+    return `<div class="pack-row pack-item" style="background:url(farm-assets/bag_s${seg}.png) center/100% 100% no-repeat"><div class="bagrow">${r.keys.map(cell).join('')}</div></div>`;
+  }).join('');
 
   const g=growthStats();
-  const growPanel = `<div class="card">
-      <div class="row" style="margin-bottom:4px"><div class="grow"><b>🌿 生长能量</b></div><span class="pill">×${g.mult.toFixed(2)}</span></div>
-      <div class="grow-line"><span>基础</span><b>×1.00</b></div>
-      <div class="grow-line"><span>已完成任务 ${g.done} × 0.1</span><b>+${(0.1*g.done).toFixed(1)}</b></div>
-      <div class="grow-line"><span>已关闭提醒 ${g.dis} × 0.01</span><b>+${(0.01*g.dis).toFixed(2)}</b></div>
+  const growPanel = `<div class="grow-card">
+      <div class="grow-body">
+        <div class="grow-head"><b>🌾 丰收祝福</b><span class="pill">×${g.mult.toFixed(2)}</span></div>
+        <div class="grow-line"><span>基础</span></div>
+        <div class="grow-line"><span>已完成任务：${g.done}</span></div>
+        <div class="grow-line"><span>已关闭提醒：${g.dis}</span></div>
+      </div>
     </div>`;
   const sortBtn=(k,t)=>`<button class="sortb ${bagSort===k?'on':''}" onclick="setBagSort('${k}')">${t}</button>`;
 
@@ -719,12 +799,14 @@ function renderFarm(){
     </div>
     <div class="screen">
       ${growPanel}
-      <div class="card">
-        <div class="row" style="margin-bottom:8px">
-          <div class="grow"><b>🎒 材料仓库</b></div>
-          <div class="sortbtns">${sortBtn('cat','类别')}${sortBtn('qty','数量')}${sortBtn('price','单价')}</div>
+      <div class="packwrap">
+        <div class="pack">
+          <div class="pack-top">
+            <div class="sortbtns">${sortBtn('cat','类别')}${sortBtn('qty','数量')}${sortBtn('price','单价')}</div>
+          </div>
+          ${packBody}
+          <div class="pack-bot"></div>
         </div>
-        <div class="bag">${bag}</div>
       </div>
     </div>`;
 }
