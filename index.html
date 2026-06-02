@@ -8,7 +8,12 @@
 <meta name="theme-color" content="#e58a3c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
 <style>
+  /* 可爱圆润中文字体（离线时优雅回退到系统字体） */
+  :root{ --cute:'ZCOOL KuaiLe','PingFang SC','Microsoft YaHei',sans-serif; }
   :root{
     --bg:#fff7ec; --panel:#fffdf8; --ink:#4a3b2a; --muted:#a8917a;
     --line:#ecdcc4; --accent:#e58a3c; --green:#6fa84f; --green-d:#557f3b;
@@ -27,7 +32,8 @@
   .pin-flush{margin:0;border-radius:0 0 16px 16px;border-top:none;border-left:none;border-right:none;box-shadow:0 5px 10px rgba(120,80,30,.13);}
   /* 顶部叠层分区标签（选中浮起并与下方面板同色融合） */
   .toptabs{display:flex;align-items:flex-end;padding:5px 6px 0;background:#fff5e8;}
-  .toptab{width:160px;text-align:center;white-space:nowrap;overflow:hidden;font-size:13px;font-weight:800;padding:7px 0 8px;border-radius:12px 12px 0 0;margin-left:-146px;cursor:pointer;position:relative;z-index:1;box-shadow:0 -1px 2px rgba(120,80,30,.08);text-shadow:0 1px 1px rgba(255,255,255,.5);}
+  .toptab{width:160px;text-align:center;white-space:nowrap;overflow:hidden;font-family:var(--cute);font-size:15px;font-weight:400;letter-spacing:.5px;padding:7px 0 8px;border-radius:12px 12px 0 0;margin-left:-146px;cursor:pointer;position:relative;z-index:1;box-shadow:0 -1px 2px rgba(120,80,30,.08);text-shadow:0 1px 1px rgba(255,255,255,.5);}
+  .toptab.on{text-shadow:0 1px 2px rgba(60,40,10,.5);}
   .toptab:first-child{margin-left:0;}
   .toptab.on{padding-bottom:12px;margin-bottom:-5px;z-index:6;}
   .toptab-actions{display:flex;gap:8px;align-self:center;margin-left:auto;padding-bottom:2px;}
@@ -240,7 +246,7 @@
    收服怪兽派工&编队 → 餐厅塔防经营。看板任务完成给高级奖励。
    ========================================================================= */
 
-const GAME_VERSION = 'v4.5 · 2026-06-01（衰败贴图三档·三种地块统一·减到0退化）';
+const GAME_VERSION = 'v4.9 · 2026-06-01（标签换可爱圆体·农田激活用浅色）';
 
 // ---------- 内容定义 ----------
 // 两级分类：每种材料属于一个小类（sub），每个小类归到一个大类 big（=地块类型 soil/pond/pasture）
@@ -417,17 +423,27 @@ function tick(dtSec){
   // 农场/渔场/牧场生长（三种统一：有伙伴正常产出；无伙伴沿衰败档减产，最终退化为野草地）
   let degraded=0, dirty=false;
   S.plots.forEach(p=>{
-    if(!p.unlocked || !p.crop) return;
+    if(!p.unlocked) return;
     const hasW = plotHasWorker(p);
+    if(p.crop && p.type!=='soil' && !hasW){ p.crop=null; p.prog=0; dirty=true; }  // 渔场/牧场失去伙伴 → 立刻回空闲
     const st = decayStage(p);
     if(p._st!==st){ p._st=st; dirty=true; }                       // 档位变了 → 刷新贴图
-    p.prog += plotSpeed(p)*dtSec*growthStats().mult*DECAY_MULT[st];
-    while(p.prog>=100){ p.prog-=100; S.ing[p.crop]=(S.ing[p.crop]||0)+1; }
-    if(hasW){ p.neglect=0; }
-    else {
-      p.neglect=(p.neglect||0)+dtSec;
-      if(p.neglect>=SOIL_DECAY_SEC){   // 荒废到底 → 野草地，需重新开垦
-        p.unlocked=false; p.type=null; p.crop=null; p.prog=0; p.worker=null; p.lv=1; p.neglect=0; p._st=0; degraded++; dirty=true;
+    if(p.crop){
+      p.idle=0;
+      p.prog += plotSpeed(p)*dtSec*growthStats().mult*DECAY_MULT[st];
+      while(p.prog>=100){ p.prog-=100; S.ing[p.crop]=(S.ing[p.crop]||0)+1; }
+      if(hasW){ p.neglect=0; }
+      else {
+        p.neglect=(p.neglect||0)+dtSec;
+        if(p.neglect>=SOIL_DECAY_SEC){ revertWild(p); degraded++; dirty=true; }   // 荒废到底 → 野草地
+      }
+    } else {
+      // 空闲地块（开垦后未种/未派）：有人看护就保持；无人看护慢慢长草，最终退回野草地
+      p.neglect=0;
+      if(hasW){ p.idle=0; }
+      else {
+        p.idle=(p.idle||0)+dtSec;
+        if(p.idle>=IDLE_REVERT_SEC){ revertWild(p); degraded++; dirty=true; }
       }
     }
   });
@@ -502,7 +518,8 @@ function panelBg(id){ return id==='farm' ? 'url(farm-assets/bg_farm.jpg) 0 0/300
 function topTabs(active){
   const tabs=SEC.map(s=>{
     const on=s.id===active; const bg= on ? panelBg(s.id) : SEC_OFF[s.id];
-    return `<div class="toptab${on?' on':''}" style="background:${bg};color:${SEC_INK[s.id]}" onclick="switchTab('${s.id}')">${s.n}</div>`;
+    const ink = (on && s.id==='farm') ? '#fffbe9' : SEC_INK[s.id];   // 农田激活时在草地上，用浅色更清晰
+    return `<div class="toptab${on?' on':''}" style="background:${bg};color:${ink}" onclick="switchTab('${s.id}')">${s.n}</div>`;
   }).join('');
   const actions=`<div class="toptab-actions">
     <button class="gear" onclick="openTasks()" title="任务" style="position:relative">${hudIcon('task','📋',30)}<span class="hud-badge" id="task-badge"></span></button>
@@ -616,17 +633,21 @@ const ING_TYPE=Object.fromEntries(ING_KEYS.map(k=>[k, ingBig(k)]));  // 作物 �
 const CULT_COSTS=[80,160,320,640,1200,2400,4800,9600,19200];   // 开垦价：按已开垦数递增（与地块位置无关）
 const CHANGE_TYPE_COST=150;                                     // 改造地块类型的花费
 const PLOT_TYPES=[['soil','农田','🌾'],['pond','渔场','🐟'],['pasture','牧场','🐄']];
-const SOIL_DECAY_SEC=180;          // 失去伙伴后，累计这么多秒退化为野草地（可调）
+const SOIL_DECAY_SEC=180;          // 有产物但失去伙伴后，累计这么多秒退化为野草地（可调）
+const IDLE_REVERT_SEC=SOIL_DECAY_SEC; // 空闲地块退回野草地的计时——与"失去伙伴"同速
 const DECAY_MULT=[1,0.75,0.5,0.25];// 各衰败档位的产能倍率：正常/轻/中/重
-function nextCultCost(){ const idx=S.plots.filter(p=>p.unlocked).length-3; return CULT_COSTS[idx]!=null?CULT_COSTS[idx]:CULT_COSTS[CULT_COSTS.length-1]; }
+function nextCultCost(){ const idx=Math.max(0, S.plots.filter(p=>p.unlocked).length-3); return CULT_COSTS[idx]!=null?CULT_COSTS[idx]:CULT_COSTS[CULT_COSTS.length-1]; }  // 价格随"当前已开垦数"，退化后变便宜
 function plotHasWorker(p){ return p.worker && !!monById(p.worker); }
-// 衰败档位：0=有伙伴看护（正常）；1/2/3=无人看护，随荒废加深（75%/50%/25% 产能）
+function revertWild(p){ p.unlocked=false;p.type=null;p.crop=null;p.prog=0;p.worker=null;p.lv=1;p.neglect=0;p.idle=0;p._st=0; }
+// 衰败档位：0=正常（有伙伴看护，或刚开垦的空地）；1/2/3=荒废加深 → 贴图与产能（75%/50%/25%）
 function decayStage(p){
-  if(!p.unlocked || !p.crop || plotHasWorker(p)) return 0;
-  const f=(p.neglect||0)/SOIL_DECAY_SEC;
-  if(f<1/3) return 1;
-  if(f<2/3) return 2;
-  return 3;
+  if(!p.unlocked || plotHasWorker(p)) return 0;
+  if(p.crop){                                  // 有产物失去看护：立即开始衰败
+    const f=(p.neglect||0)/SOIL_DECAY_SEC;
+    return f<1/3?1 : f<2/3?2 : 3;
+  }
+  const f=(p.idle||0)/IDLE_REVERT_SEC;          // 空闲地块：前段保持干净，之后才慢慢长草
+  return f<0.4?0 : f<0.6?1 : f<0.8?2 : 3;
 }
 function plotTileFile(p){
   if(!p.unlocked) return `farm-assets/wild_${p.variant||1}.png`;
@@ -783,8 +804,8 @@ function setPlotCrop(i,k){
 function setPlotPartner(i,wid){
   const p=S.plots[i]; const m=monById(wid);
   if(!m||!m.diet||m.diet.type!==p.type) return;
-  S.plots.forEach(pp=>{ if(pp!==p && pp.worker===wid){ pp.worker=null; } });  // 一只伙伴只在一处；原地块保留产物，开始荒废
-  p.worker=wid; p.crop=m.diet.ing; if(p.prog==null) p.prog=0; p.neglect=0; m.job='farm';
+  S.plots.forEach(pp=>{ if(pp!==p && pp.worker===wid){ pp.worker=null; if(pp.type!=='soil'){ pp.crop=null; pp.prog=0; } } });  // 一只伙伴只在一处；原渔牧地块立刻回空闲
+  p.worker=wid; p.crop=m.diet.ing; if(p.prog==null) p.prog=0; p.neglect=0; p.idle=0; m.job='farm';
   const verb = m.diet.mode==='hunt' ? '开始捕猎' : '开始产出';
   toast(`${m.s} 进驻${BIG_NAME[p.type]}，${verb}${ING[m.diet.ing].e}${ING[m.diet.ing].n}`);
   saveGame(); renderFarm(); openPlotManage(i);
@@ -792,7 +813,7 @@ function setPlotPartner(i,wid){
 function clearPlotPartner(i){
   const p=S.plots[i];
   if(p.worker){ const m=monById(p.worker); if(m && m.job==='farm') m.job='idle'; }
-  p.worker=null;   // 保留产物，从此无人看护 → 沿衰败贴图荒废，最终退化为野草地
+  p.worker=null; p.crop=null; p.prog=0;   // 撤走伙伴 → 立刻回空闲，随后按空闲计时慢慢退回野草地
   saveGame(); renderFarm(); openPlotManage(i);
 }
 function setPlotWorker(i,wid){
